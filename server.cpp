@@ -6,9 +6,11 @@
 #include <cstring>
 #include "RequestHandler.h"
 
+#include <unistd.h>
+
 #define MAX_CONNECTIONS 40
 struct thread_args {
-    int new_socket;
+    int *new_socket;
 };
 
 void *handle_message(void *args);
@@ -31,15 +33,13 @@ int main(int argc, char *argv[])
     server.sin_port = 0;
 
     int bind_status = bind(server_socket, (struct sockaddr *) &server, sizeof(server));
-    if (bind_status == -1)
-    {
+    if (bind_status == -1) {
         perror("binding stream socket");
         exit(1);
     }
 
     length = sizeof(server);
-    if (getsockname(server_socket, (struct sockaddr *) &server, (socklen_t *) (&length)) == -1)
-    {
+    if (getsockname(server_socket, (struct sockaddr *) &server, (socklen_t *) (&length)) == -1) {
         perror("getting socket name");
         exit(1);
     }
@@ -60,23 +60,21 @@ int main(int argc, char *argv[])
         perror("listen start");
         exit(1);
     }
-
-    while (true)
-    {
+    while (true) {
         socklen_t address_size = sizeof(server_storage);
-        int new_socket = accept(server_socket, (struct sockaddr *) &server_storage, &address_size);
-        thread_args args{};
-        args.new_socket = new_socket;
+        int *new_socket = new int;
+        *new_socket = accept(server_socket, (struct sockaddr *) &server_storage, &address_size);
+        auto *args = new thread_args;
+        args->new_socket = new_socket;
 
         pthread_attr_t t_attr;
         pthread_t tid;
         int ret;
         pthread_attr_init(&t_attr);
         pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
-        ret = pthread_create(&tid, &t_attr, handle_message, &args);
+        ret = pthread_create(&tid, &t_attr, handle_message, args);
 
-        if (ret != 0)
-        {
+        if (ret != 0) {
             perror("thread create");
             continue;
         }
@@ -85,14 +83,26 @@ int main(int argc, char *argv[])
 
 void *handle_message(void *voidArgs)
 {
-    auto args = (thread_args *) voidArgs;
+    auto *args = (thread_args *) voidArgs;
+    auto handler = RequestHandler(*args->new_socket);
 
-    RequestHandler handler = RequestHandler(args->new_socket);
+    //create example message
+    const int size = 40;
+    char *buffer = new char[size];
+    for (int i = 0; i < size; ++i)
+        buffer[i] = '\0';
 
-    size_t size = 100;
-    char* buff = new char[100];
-    strcpy(buff, "message\n");
-    char * message = handler.send_and_receive_message(buff, size);
-    printf("%s\n", message);
+    strcpy(buffer, "Hello Client\n");
+
+    //receive and send message
+    char *response = handler.receive_and_send_message(buffer, size);
+    printf("%s\n", response);
+
+    //close connection
+    close(*(args->new_socket));
+    delete[] buffer;
+    delete args->new_socket;
+    delete args;
+
     return nullptr;
 }

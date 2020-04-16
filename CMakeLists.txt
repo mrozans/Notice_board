@@ -6,4 +6,3 @@ set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -Wall -pthread")
 
 #server
 add_executable(server server.cpp RequestHandler.cpp RequestHandler.h)
-add_executable(server_c TIN/sock_client1.c)
