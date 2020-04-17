@@ -8,9 +8,10 @@ private:
     static const unsigned int INPUT_MESSAGE_SIZE = 1024;
     static const unsigned int OUTPUT_MESSAGE_SIZE = 1024;
     char input_message[INPUT_MESSAGE_SIZE]{};
+    struct timeval timeout{};
 
 public:
-    explicit RequestHandler(int socket);
+    RequestHandler(int socket, int timeout);
 
     void send_message(char *message, size_t message_size);
 

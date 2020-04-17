@@ -2,15 +2,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <unistd.h>
 #include <string>
 #include <cstring>
 #include "RequestHandler.h"
 
-#include <unistd.h>
 
 #define MAX_CONNECTIONS 40
+
 struct thread_args {
-    int *new_socket;
+    int new_socket;
 };
 
 void *handle_message(void *args);
@@ -27,10 +28,13 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    int mode = 0;
+    setsockopt(server_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&mode, sizeof(mode));
+
     //server config
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = 0;
+    server.sin_port = htons(1671);
 
     int bind_status = bind(server_socket, (struct sockaddr *) &server, sizeof(server));
     if (bind_status == -1) {
@@ -61,11 +65,11 @@ int main(int argc, char *argv[])
         exit(1);
     }
     while (true) {
-        socklen_t address_size = sizeof(server_storage);
-        int *new_socket = new int;
-        *new_socket = accept(server_socket, (struct sockaddr *) &server_storage, &address_size);
         auto *args = new thread_args;
-        args->new_socket = new_socket;
+        socklen_t address_size = sizeof(server_storage);
+        args->new_socket = accept(server_socket, (struct sockaddr *) &server_storage, &address_size);
+
+        setsockopt(args->new_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&mode, sizeof(mode));
 
         pthread_attr_t t_attr;
         pthread_t tid;
@@ -84,7 +88,7 @@ int main(int argc, char *argv[])
 void *handle_message(void *voidArgs)
 {
     auto *args = (thread_args *) voidArgs;
-    auto handler = RequestHandler(*args->new_socket);
+    auto handler = RequestHandler(args->new_socket, 5);
 
     //create example message
     const int size = 40;
@@ -95,13 +99,13 @@ void *handle_message(void *voidArgs)
     strcpy(buffer, "Hello Client\n");
 
     //receive and send message
-    char *response = handler.receive_and_send_message(buffer, size);
+    char *response = handler.read_message();
     printf("%s\n", response);
 
+    printf("close\n");
     //close connection
-    close(*(args->new_socket));
+    close((args->new_socket));
     delete[] buffer;
-    delete args->new_socket;
     delete args;
 
     return nullptr;

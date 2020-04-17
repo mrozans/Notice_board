@@ -2,7 +2,14 @@
 #include <sys/socket.h>
 #include "RequestHandler.h"
 
-RequestHandler::RequestHandler(int socket) : socket(socket) {}
+RequestHandler::RequestHandler(int socket, int timeout_value) : socket(socket)
+{
+    timeout.tv_sec = timeout_value;
+    if(setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout)) < 0)
+    {
+        perror("socket timeout init");
+    }
+}
 
 void RequestHandler::send_message(char *message, size_t message_size)
 {
