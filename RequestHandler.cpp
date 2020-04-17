@@ -11,7 +11,7 @@ RequestHandler::RequestHandler(int socket, int timeout_value) : socket(socket)
     }
 }
 
-void RequestHandler::send_message(char *message, size_t message_size)
+void RequestHandler::send_message(char *message, size_t message_size) const
 {
     ssize_t ret = send(socket, message, message_size, 0);
     if (ret == -1) {

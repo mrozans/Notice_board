@@ -13,7 +13,7 @@ private:
 public:
     RequestHandler(int socket, int timeout);
 
-    void send_message(char *message, size_t message_size);
+    void send_message(char *message, size_t message_size) const;
 
     char *read_message();
 
