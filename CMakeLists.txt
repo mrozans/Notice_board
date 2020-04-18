@@ -17,6 +17,8 @@ target_link_libraries(RequestHandlerTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
 add_test(boostUnitTestsRun RequestHandlerTest)
 
+enable_testing()
+
 # indicates the include paths
 #target_include_directories(RequestHandlerTest PRIVATE ${Boost_INCLUDE_DIRS})
 # indicates the shared library variant

@@ -1,7 +1,6 @@
 #ifndef TIN_TABLICA_OGLOSZEN_REQUESTHANDLER_H
 #define TIN_TABLICA_OGLOSZEN_REQUESTHANDLER_H
 
-
 class RequestHandler {
 private:
     int socket;
