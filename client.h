@@ -1,3 +1,4 @@
+#include <ctime>
 #include <iostream>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -21,8 +22,12 @@ private:
     int sock;
     sockaddr_t server;
     struct hostent *hp;
-
+    struct thread_args {
+        int socket;
+    };
 public:
+    thread_args *args;
+
     Client(char *server_name, char *port) : server_name(server_name), port(port) { }
 
     int connect_to_server()
@@ -56,6 +61,34 @@ public:
         return 0;
     }
 
+    static void *read_message(void *voidArgs)
+    {
+        auto *args = (thread_args *) voidArgs;
+        const int size = 40;
+        char *buffer = new char[size];
+        for (int i = 0; i < size; ++i)
+        {
+            buffer[i] = '\0';
+        }
+        time_t current_time = time(NULL);
+        while(true)
+        {
+            if(read(args->socket, buffer, 40) > 1)
+            {
+                printf("%s\n", buffer);
+                break;
+            }
+            if(time(NULL) - current_time > 10)
+            {
+                printf("no confirmation form server\n");
+                break;
+            }
+        }
+        delete[] buffer;
+        delete args;
+        return 0;
+    }
+
 private:
     bool check_if_ipv6(char *ip)
     {
@@ -75,6 +108,9 @@ private:
             return 1;
         }
 
+        args = new thread_args;
+        args->socket = sock;
+
         server.ipv4.sin_family = AF_INET;
 
         hp = gethostbyname2(server_name, AF_INET);
@@ -84,6 +120,7 @@ private:
             std::cout << "Unknown host: " << server_name << std::endl;
             return 1;
         }
+
 
         memcpy((char *) &server.ipv4.sin_addr, (char *) hp->h_addr, hp->h_length);
         
@@ -101,6 +138,9 @@ private:
             perror("String socket can't be opened!");
             return 1;
         }
+
+        args = new thread_args;
+        args->socket = sock;
 
         server.ipv6.sin6_family = AF_INET6;
 
@@ -151,4 +191,6 @@ private:
 
         return 0;
     }
+
+
 };
