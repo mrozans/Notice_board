@@ -1,25 +1,29 @@
 #ifndef TIN_TABLICA_OGLOSZEN_REQUESTHANDLER_H
 #define TIN_TABLICA_OGLOSZEN_REQUESTHANDLER_H
 
+#include <spdlog/logger.h>
 
-class RequestHandler {
+class RequestHandler{
 private:
     int socket;
-    static const unsigned int INPUT_MESSAGE_SIZE = 1024;
-    static const unsigned int OUTPUT_MESSAGE_SIZE = 1024;
-    char input_message[INPUT_MESSAGE_SIZE]{};
+    std::shared_ptr<spdlog::logger> logger;
+
+    const static unsigned int INPUT_MESSAGE_LEN = 3;
+    char input_message_len[INPUT_MESSAGE_LEN]{};
     struct timeval timeout{};
 
 public:
-    RequestHandler(int socket, int timeout);
+    RequestHandler(int socket,std::shared_ptr<spdlog::logger> logger, int timeout);
 
-    void send_message(char *message, size_t message_size) const;
+    void send_message(char *message, size_t message_size) const noexcept(false);
 
-    char *read_message();
+    char *read_message() noexcept(false);
 
-    char *send_and_receive_message(char *message, size_t message_size);
+    char *send_and_receive_message(char *message, size_t message_size) noexcept(false);
 
-    char *receive_and_send_message(char *message, size_t message_size);
+    char *receive_and_send_message(char *message, size_t message_size) noexcept(false);
 
+private:
+    static unsigned int str_to_int(char *buff);
 };
 #endif //TIN_TABLICA_OGLOSZEN_REQUESTHANDLER_H
