@@ -50,12 +50,12 @@ public:
         }
     }
 
-    void insert(const std::string& table, std::vector<std::string> attributes, std::vector<std::string> values)
+    int insert(const std::string& table, std::vector<std::string> attributes, std::vector<std::string> values)
     {
         try
         {
             pqxx::connection C(connection_string);
-            if(attributes.size() != values.size()) return;
+            if(attributes.size() != values.size()) return 1;
             std::string sql1, sql2;
             for(int i = 0; i < attributes.size(); i++)
             {
@@ -72,14 +72,16 @@ public:
             W.exec(sql);
             W.commit();
             C.disconnect();
+            return 0;
         }
         catch (const std::exception &e)
         {
             std::cerr<<e.what()<<std::endl;
+            return 1;
         }
     }
 
-    void delete_record(const std::string& table, const std::string& id)
+    int delete_record(const std::string& table, const std::string& id)
     {
         try
         {
@@ -89,14 +91,16 @@ public:
             W.exec(sql);
             W.commit();
             C.disconnect();
+            return 0;
         }
         catch (const std::exception &e)
         {
             std::cerr<<e.what()<<std::endl;
+            return 1;
         }
     }
 
-    void delete_record_form_intersection_table(const std::string& category_id, const std::string& user_id)
+    int delete_record_form_intersection_table(const std::string& category_id, const std::string& user_id)
     {
         try
         {
@@ -106,10 +110,12 @@ public:
             W.exec(sql);
             W.commit();
             C.disconnect();
+            return 0;
         }
         catch (const std::exception &e)
         {
             std::cerr<<e.what()<<std::endl;
+            return 1;
         }
     }
 };
