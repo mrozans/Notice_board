@@ -13,26 +13,117 @@ int main(int argc, char *argv[])
         std::cout << "Name = " << c[1].as<std::string>() << std::endl;
         std::cout << "Owner id = " << c[2].as<int>() << std::endl;
     }
-//    R = db->select_with_specified_attribute("messages", "id", "3");
-//    for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-//    {
-//        std::cout << "Message= " << c[3].as<std::string>() << std::endl;
-//    }
+    delete db;
+}
 
-//    std::vector<std::string> attributes;
-//    std::vector<std::string> values;
-//
-//    attributes.insert(attributes.begin(), "updated_at");
-//    attributes.insert(attributes.begin(), "created_at");
-//    attributes.insert(attributes.begin(), "access_key");
-//    attributes.insert(attributes.begin(), "user_id");
-//    values.insert(values.begin(), "CURRENT_TIMESTAMP");
-//    values.insert(values.begin(), "CURRENT_TIMESTAMP");
-//    values.insert(values.begin(), "123");
-//    values.insert(values.begin(), "1");
-//    db->insert("clients", attributes, values);
+Database::Database(std::string connection_string)
+{
+    this->connection_string = std::move(connection_string);
+}
 
+pqxx::result Database::select_all(const std::string& table)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "SELECT * FROM " + table;
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        return R;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        pqxx::result R;
+        return R;
+    }
+}
 
-//    db->delete_record("clients", "4");
-//    db->delete_record_form_intersection_table(6, 1);
+pqxx::result Database::select_with_specified_attribute(const std::string& table, const std::string& attribute, const std::string& value)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "SELECT * FROM " + table + " WHERE " + attribute + " = " + value;
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        return R;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        pqxx::result R;
+        return R;
+    }
+}
+
+int Database::insert(const std::string& table, std::vector<std::string> attributes, std::vector<std::string> values)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        if(attributes.size() != values.size()) return 1;
+        std::string sql1, sql2;
+        for(int i = 0; i < attributes.size(); i++)
+        {
+            if(i != 0)
+            {
+                sql1 += ",";
+                sql2 += ",";
+            }
+            sql1 += attributes[i];
+            sql2 += values[i];
+        }
+        std::string sql = "INSERT INTO " + table + " (" + sql1 + ") " + "VALUES (" + sql2 + ");";
+        pqxx::work W(C);
+        W.exec(sql);
+        W.commit();
+        C.disconnect();
+        return 0;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return 1;
+    }
+}
+
+int Database::delete_record(const std::string& table, const std::string& id)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "DELETE FROM " + table + " WHERE id = " + id;
+        pqxx::work W(C);
+        W.exec(sql);
+        W.commit();
+        C.disconnect();
+        return 0;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return 1;
+    }
+}
+
+int Database::delete_record_form_intersection_table(const std::string& category_id, const std::string& user_id)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "DELETE FROM categories_users WHERE category_id = " + category_id + " AND user_id = " + user_id;
+        pqxx::work W(C);
+        W.exec(sql);
+        W.commit();
+        C.disconnect();
+        return 0;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return 1;
+    }
 }
