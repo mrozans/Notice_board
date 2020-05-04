@@ -9,6 +9,6 @@ find_library(libpqxx_LIBRARY_RELEASE NAMES libpqxx)
 find_library(libpqxx_LIBRARY_DEBUG NAMES libpqxxd)
 select_library_configurations(libpqxx)
 
-add_executable(client client.cpp client.h)
+add_executable(client client.h client.cpp)
 target_link_libraries(client -lpqxx)
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}  -Wall -pthread -lboost_system")
