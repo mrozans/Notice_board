@@ -1,3 +1,7 @@
+/**
+ * @authors Tomasz Mazur, Marcin Mozolewski
+ *
+ */
 #ifndef TIN_TABLICA_OGLOSZEN_JSONPARSER_H
 #define TIN_TABLICA_OGLOSZEN_JSONPARSER_H
 
@@ -7,11 +11,11 @@ class JSONParser {
 public:
     struct client_message{
         std::string token;
-        std::string code;
+        unsigned short int code;
         std::string body;
     };
     struct server_message{
-        std::string respCode;
+        unsigned short int code;
         std::string body;
     };
 

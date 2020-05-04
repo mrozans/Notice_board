@@ -1,4 +1,9 @@
+/**
+ * @authors Tomasz Mazur, Marcin Mozolewski
+ *
+ */
 #include <string>
+#include <utility>
 #include <sys/socket.h>
 #include "RequestHandler.h"
 
@@ -55,20 +60,21 @@ char *RequestHandler::read_message()
     return message;
 }
 
-char *RequestHandler::send_and_receive_message(char *message, size_t message_size)
-{
-    send_message(message, message_size);
-    return read_message();
-}
-
-char *RequestHandler::receive_and_send_message(char *message, size_t message_size)
-{
-    char *response = read_message();
-    send_message(message, message_size);
-    return response;
-}
-
 unsigned int RequestHandler::str_to_int(char *buff)
 {
     return (unsigned int) std::stoul(buff, nullptr, 10);
+}
+
+void RequestHandler::send_message(const std::string& message) const noexcept(false)
+{
+    int message_length = message.length();
+
+    std::string message_to_client = std::to_string(message_length) + "\0" + message;
+
+    send_message(const_cast<char*>(message_to_client.c_str()), message_to_client.length());
+}
+
+void RequestHandler::send_message(JSONParser::server_message message) const
+{
+    send_message(JSONParser::generate_server_message(std::move(message)));
 }

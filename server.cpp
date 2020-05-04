@@ -16,6 +16,7 @@
 #include "RequestHandler.h"
 #include "server.h"
 #include "JSONParser.h"
+#include "MessageHandler.h"
 
 int main(int argc, char *argv[])
 {
@@ -93,6 +94,7 @@ void Server::start_server(const int connections)
     {
         args = new thread_args;
         args->logger = logger;
+        args->timeout = 5;
         args->new_socket = accept(server_socket, (struct sockaddr *) &server_storage, &address_size);
 
         setsockopt(args->new_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&mode, sizeof(mode));
@@ -108,33 +110,40 @@ void Server::start_server(const int connections)
 void *Server::handle_message(void *voidArgs)
 {
     auto *args = (thread_args *) voidArgs;
-    auto handler = RequestHandler(args->new_socket,args->logger, 5);
+    auto handler = RequestHandler(args->new_socket,args->logger, args->timeout);
 
     args->logger->info("start of thread for socket: " + std::to_string(args->new_socket));
-
-    char * message = handler.read_message();
+    //receive and
+    char * message;
+    JSONParser::client_message clientMessage;
     try{
-        JSONParser::client_message clientMessage = JSONParser::get_client_message(message);
-    } catch (nlohmann::json::exception& e) {
-        //todo: send error message
-        //handler.send_message()
+        message = handler.read_message();
+        clientMessage = JSONParser::get_client_message(message);
+    } catch (const std::exception& e) {
+        args->logger->error(e.what());
+        auto server_message =  MessageHandler::server_error_message(e.what());
+        handler.send_message(server_message);
 
-        //close
+        close_single_connection(args);
+        return nullptr;
+    }
+    // return message
+    auto server_message = MessageHandler(clientMessage).run_as_server();
+    try{
+        handler.send_message(server_message);
+        args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
+                           "sent from thread from socket: " + std::to_string(args->new_socket));
+    } catch (const std::exception& e) {
+        args->logger->error(e.what());
     }
 
-    //cos w bazie danych
+    close_single_connection(args);
+    return nullptr;
+}
 
-    JSONParser::server_message serverMessage = {};
-
-    std::string s = JSONParser::generate_server_message(serverMessage);
-
-
-    //change size
-    //handler.send_message(s);
-
-    //close connection
+void Server::close_single_connection(thread_args *args)
+{
     close((args->new_socket));
     delete args;
     args->logger->info("end of thread for socket: " + std::to_string(args->new_socket));
-    return nullptr;
 }

@@ -9,16 +9,13 @@ find_package(spdlog 0.16.2)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
 #server
-add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.cpp JSONParser.h)
+add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.cpp JSONParser.h MessageHandler.h MessageHandler.cpp)
 
 #tests
-add_executable(RequestHandlerTest Tests/RequestHandlerTest.cpp)
 add_executable(JSONParserTest Tests/JSONParserTest.cpp)
 
-target_link_libraries(RequestHandlerTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 target_link_libraries(JSONParserTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} nlohmann_json::nlohmann_json)
 
-add_test(boostUnitTestsRun RequestHandlerTest)
 add_test(boostUnitTestsRun JSONParserTest)
 
 #tests
@@ -39,13 +36,3 @@ if(NOT json_POPULATED)
 endif()
 
 target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json)
-
-
-
-
-# indicates the include paths
-#target_include_directories(RequestHandlerTest PRIVATE ${Boost_INCLUDE_DIRS})
-# indicates the shared library variant
-#target_compile_definitions(RequestHandlerTest PRIVATE "BOOST_TEST_DYN_LINK=1")
-# indicates the link paths
-#target_link_libraries(RequestHandlerTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})

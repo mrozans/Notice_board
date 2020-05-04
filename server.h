@@ -1,3 +1,8 @@
+/**
+ * @authors Tomasz Mazur, Marcin Mozolewski
+ *
+ */
+
 #ifndef TIN_TABLICA_OGLOSZEN_SERVER_H
 #define TIN_TABLICA_OGLOSZEN_SERVER_H
 
@@ -18,6 +23,7 @@ private:
     struct thread_args {
         int new_socket;
         std::shared_ptr<spdlog::logger> logger;
+        int timeout;
     };
 //methods
 public:
@@ -28,6 +34,7 @@ public:
 private:
     static void *handle_message(void *voidArgs);
 
+    static void close_single_connection(thread_args *args);
 };
 
 #endif //TIN_TABLICA_OGLOSZEN_SERVER_H
