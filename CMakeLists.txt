@@ -36,3 +36,11 @@ if(NOT json_POPULATED)
 endif()
 
 target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json)
+find_path(libpqxx_INCLUDE_DIR /pqxx/pqxx)
+include(SelectLibraryConfigurations)
+find_library(libpqxx_LIBRARY_RELEASE NAMES libpqxx)
+find_library(libpqxx_LIBRARY_DEBUG NAMES libpqxxd)
+select_library_configurations(libpqxx)
+
+add_executable(client client.h client.cpp)
+target_link_libraries(client -lpqxx)
