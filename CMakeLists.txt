@@ -12,3 +12,4 @@ select_library_configurations(libpqxx)
 add_executable(client client.h client.cpp)
 target_link_libraries(client -lpqxx)
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}  -Wall -pthread -lboost_system")
+
