@@ -13,9 +13,15 @@ add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.
 
 #tests
 add_executable(RequestHandlerTest Tests/RequestHandlerTest.cpp)
+add_executable(JSONParserTest Tests/JSONParserTest.cpp)
+
 target_link_libraries(RequestHandlerTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+target_link_libraries(JSONParserTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} nlohmann_json::nlohmann_json)
 
 add_test(boostUnitTestsRun RequestHandlerTest)
+add_test(boostUnitTestsRun JSONParserTest)
+
+#tests
 
 enable_testing()
 
