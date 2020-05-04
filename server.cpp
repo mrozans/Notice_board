@@ -12,8 +12,10 @@
 #include <cstring>
 #include <iostream>
 #include <arpa/inet.h>
+#include <nlohmann/json.hpp>
 #include "RequestHandler.h"
 #include "server.h"
+#include "JSONParser.h"
 
 int main(int argc, char *argv[])
 {
@@ -110,37 +112,28 @@ void *Server::handle_message(void *voidArgs)
 
     args->logger->info("start of thread for socket: " + std::to_string(args->new_socket));
 
-    //create example message
-    const int size = 40;
-    char *buffer = new char[size];
-    for (int i = 0; i < size; ++i)
-    {
-        buffer[i] = '\0';
+    char * message = handler.read_message();
+    try{
+        JSONParser::client_message clientMessage = JSONParser::get_client_message(message);
+    } catch (nlohmann::json::exception& e) {
+        //todo: send error message
+        //handler.send_message()
+
+        //close
     }
 
-    strcpy(buffer, "Hello Client\n");
+    //cos w bazie danych
 
-//    try{
-//        handler.send_message(buffer, size);
-//    } catch (const std::exception& e) {
-//        args->logger->error(e.what());
-//    }
+    JSONParser::server_message serverMessage = {};
 
-    //response
-    char *response;
-    try
-    {
-        response = handler.read_message();
-        printf("%s\n", response);
-        delete[] response;
-    } catch (const std::exception& e)
-    {
-        args->logger->error(e.what());
-    }
+    std::string s = JSONParser::generate_server_message(serverMessage);
+
+
+    //change size
+    //handler.send_message(s);
 
     //close connection
     close((args->new_socket));
-    delete[] buffer;
     delete args;
     args->logger->info("end of thread for socket: " + std::to_string(args->new_socket));
     return nullptr;
