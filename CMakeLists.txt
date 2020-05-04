@@ -9,7 +9,7 @@ find_package(spdlog 0.16.2)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
 #server
-add_executable(server server.cpp RequestHandler.cpp RequestHandler.h)
+add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.cpp JSONParser.h)
 
 #tests
 add_executable(RequestHandlerTest Tests/RequestHandlerTest.cpp)
@@ -18,6 +18,24 @@ target_link_libraries(RequestHandlerTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 add_test(boostUnitTestsRun RequestHandlerTest)
 
 enable_testing()
+
+#JSON parser
+include(FetchContent)
+
+FetchContent_Declare(json
+        GIT_REPOSITORY https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+        GIT_TAG v3.7.3)
+
+FetchContent_GetProperties(json)
+if(NOT json_POPULATED)
+    FetchContent_Populate(json)
+    add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json)
+
+
+
 
 # indicates the include paths
 #target_include_directories(RequestHandlerTest PRIVATE ${Boost_INCLUDE_DIRS})
