@@ -45,7 +45,7 @@ char *RequestHandler::read_message()
     }
     char * message = new char[message_len];
 
-    memset(message, 0, message_len * sizeof(*message));
+    //memset(message, 0, message_len * sizeof(*message));
 
     ssize_t received_message_size = recv(socket, message, message_len, 0);
 

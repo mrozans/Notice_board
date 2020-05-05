@@ -26,6 +26,7 @@ private:
         int socket;
     };
 public:
+    const static unsigned int MESSAGE_MAX_LEN = 4;
     thread_args *args{};
 
     Client(char *server_name, char *port) : server_name(server_name), port(port) { };

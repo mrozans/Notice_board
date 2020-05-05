@@ -17,7 +17,20 @@ int main(int argc, char *argv[])
         perror("Opening listening thread");
         return 1;
     }
-    client->send(argv[3]);
+
+    std::string s = "{\"token\":\"1234\",\"code\":2,\"body\":\"{\\\"cid\\\":\\\"5\\\",\\\"title\\\":\\\"test1\\\",\\\"content\\\":\\\"test2\\\"}\"}";
+
+    int len = (int)((int)Client::MESSAGE_MAX_LEN - 1 - std::to_string((int)s.length()).length());
+    if(len < 0){
+        throw std::logic_error("message is too long");
+    }
+    auto message_length  =std::string(len, '0') + std::to_string(s.length()+ 1) + "\n";
+
+    std::cout<<message_length + s <<std::endl;
+
+
+
+    client->send(const_cast<char*>((message_length + s).c_str()));
     pthread_join(tid, nullptr);
     client->disconnect();
 }
@@ -56,7 +69,7 @@ int Client::disconnect() const
 void *Client::read_message(void *voidArgs)
 {
     auto *args = (thread_args *) voidArgs;
-    const int size = 40;
+    const int size = 4000;
     char *buffer = new char[size];
     for (int i = 0; i < size; ++i)
     {
@@ -65,7 +78,7 @@ void *Client::read_message(void *voidArgs)
     time_t current_time = time(nullptr);
     while(true)
     {
-        if(read(args->socket, buffer, 40) > 1)
+        if(read(args->socket, buffer, size) > 1)
         {
             printf("%s\n", buffer);
             break;
