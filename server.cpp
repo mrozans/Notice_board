@@ -20,7 +20,7 @@
 
 int main(int argc, char *argv[])
 {
-    Server s = Server(in6addr_any, 57069);
+    Server s = Server(in6addr_any, 57071);
     s.configure_server();
     s.start_server(40);
     //s.stop();

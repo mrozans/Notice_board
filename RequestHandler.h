@@ -13,7 +13,7 @@ private:
     int socket;
     std::shared_ptr<spdlog::logger> logger;
 
-    const static unsigned int INPUT_MESSAGE_LEN = 3;
+    const static unsigned int INPUT_MESSAGE_LEN = 4;
     char input_message_len[INPUT_MESSAGE_LEN]{};
     struct timeval timeout{};
 

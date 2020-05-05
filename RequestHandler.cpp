@@ -67,9 +67,13 @@ unsigned int RequestHandler::str_to_int(char *buff)
 
 void RequestHandler::send_message(const std::string& message) const noexcept(false)
 {
-    int message_length = message.length();
+    int len = (int)((int)INPUT_MESSAGE_LEN - 1 - std::to_string((int)message.length()).length());
+    if(len < 0){
+        throw std::logic_error("message is too long");
+    }
+    auto message_length  = std::string(len, '0') + std::to_string(message.length()) + "\0";
 
-    std::string message_to_client = std::to_string(message_length) + "\0" + message;
+    std::string message_to_client = message_length + message;
 
     send_message(const_cast<char*>(message_to_client.c_str()), message_to_client.length());
 }
