@@ -8,9 +8,16 @@ add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
 find_package(spdlog 0.16.2)
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
-#server
-add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.cpp JSONParser.h MessageHandler.h MessageHandler.cpp)
+find_path(libpqxx_INCLUDE_DIR /pqxx/pqxx)
+include(SelectLibraryConfigurations)
+find_library(libpqxx_LIBRARY_RELEASE NAMES libpqxx)
+find_library(libpqxx_LIBRARY_DEBUG NAMES libpqxxd)
+select_library_configurations(libpqxx)
 
+
+
+#server
+add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.cpp JSONParser.h MessageHandler.h MessageHandler.cpp database.h database.cpp)
 #tests
 add_executable(JSONParserTest Tests/JSONParserTest.cpp)
 
@@ -35,12 +42,6 @@ if(NOT json_POPULATED)
     add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json)
-find_path(libpqxx_INCLUDE_DIR /pqxx/pqxx)
-include(SelectLibraryConfigurations)
-find_library(libpqxx_LIBRARY_RELEASE NAMES libpqxx)
-find_library(libpqxx_LIBRARY_DEBUG NAMES libpqxxd)
-select_library_configurations(libpqxx)
+target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json -lpqxx)
 
 add_executable(client client.h client.cpp)
-target_link_libraries(client -lpqxx)

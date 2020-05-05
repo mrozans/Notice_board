@@ -11,11 +11,11 @@ class JSONParser {
 public:
     struct client_message{
         std::string token;
-        unsigned short int code;
+        unsigned short code;
         std::string body;
     };
     struct server_message{
-        unsigned short int code;
+        unsigned short code;
         std::string body;
     };
 

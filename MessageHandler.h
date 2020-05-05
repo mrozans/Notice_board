@@ -9,17 +9,19 @@
 #include <utility>
 
 #include "JSONParser.h"
+#include "database.h"
 
 class MessageHandler {
 private:
     JSONParser::server_message server_message;
     JSONParser::client_message client_message;
+    Database database;
 public:
-    explicit MessageHandler(JSONParser::client_message message): client_message(std::move(message))
+    explicit MessageHandler(JSONParser::client_message message, Database database): client_message(std::move(message)), database(std::move(database))
     {
         server_message = {};
     };
-    explicit MessageHandler(JSONParser::server_message message): server_message(std::move(message))
+    explicit MessageHandler(JSONParser::server_message message, Database database): server_message(std::move(message)), database(std::move(database))
     {
         client_message = {};
     };

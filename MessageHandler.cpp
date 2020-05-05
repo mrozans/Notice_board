@@ -5,6 +5,7 @@
 #include "MessageHandler.h"
 
 #include <utility>
+#include <nlohmann/json.hpp>
 
 JSONParser::server_message MessageHandler::run_as_server()
 {
@@ -47,6 +48,7 @@ JSONParser::server_message MessageHandler::server_error_message(std::string mess
 JSONParser::client_message MessageHandler::client_error_message(std::string message_body)
 {
     JSONParser::client_message clientMessage = {};
+    clientMessage.token = "";
     clientMessage.code = 0;
     clientMessage.body = std::move(message_body);
     return clientMessage;
@@ -55,28 +57,59 @@ JSONParser::client_message MessageHandler::client_error_message(std::string mess
 JSONParser::server_message MessageHandler::remove_message()
 {
     //ToDo
+    this->server_message.code = 1;
+    this->server_message.body = database.delete_message_with_id(this->client_message.body, this->client_message.token);
     return this->server_message;
 }
 
 JSONParser::server_message MessageHandler::get_new_messages()
 {
     //ToDo
+    this->server_message.code = 1;
+    this->server_message.body = "";
     return this->server_message;
 }
 
 JSONParser::server_message MessageHandler::create_new_message()
 {
+    struct s1{
+        int f1;
+        std::string f2;
+        float f3;
+    };
+    s1 q;
+    try{
+        nlohmann::json j = nlohmann::json::parse(client_message.body);
+        q = s1{
+                j["f1"].get<int>(),
+                j["f2"].get<std::string>(),
+                j["f3"].get<float>()
+        };
+    } catch (const std::exception& e) {
+        this->server_message.code = 0;
+        this->server_message.body = e.what();
+        return this->server_message;
+    }
+
+    //q.f1;
     //ToDo
+    this->server_message.code = 1;
+    this->server_message.body = "";
     return this->server_message;
 }
 
 JSONParser::server_message MessageHandler::client_authorization()
 {
-    //ToDo
+    this->server_message.code = 1;
+    this->server_message.body = database.select_user_where_fingerprint(this->client_message.token);
     return this->server_message;
 }
 
 JSONParser::client_message MessageHandler::confirm_message()
 {
+    //ToDo
+    this->client_message.code = 1;
+    this->client_message.body = "";
+    this->client_message.token = "";
     return this->client_message;
 }

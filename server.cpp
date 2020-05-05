@@ -17,10 +17,11 @@
 #include "server.h"
 #include "JSONParser.h"
 #include "MessageHandler.h"
+#include "database.h"
 
 int main(int argc, char *argv[])
 {
-    Server s = Server(in6addr_any, 57071);
+    Server s = Server(in6addr_any, 57072);
     s.configure_server();
     s.start_server(40);
     //s.stop();
@@ -28,6 +29,7 @@ int main(int argc, char *argv[])
 
 Server::Server(in6_addr addr, uint16_t port_number): addr(addr), port(port_number)
 {
+    this->database =  Database("dbname = d76gv3n4db0gh3 user = okvktqrnllnttg password = ea7ec25c8cff047422240fbeba3e569edfbcdfb4b516c3e0cd5784568da4734a hostaddr = 54.247.169.129 port = 5432");
     try
     {
         logger = spdlog::basic_logger_mt("server", "server-logs.txt");
@@ -93,6 +95,7 @@ void Server::start_server(const int connections)
     while (true)
     {
         args = new thread_args;
+        args->database = this->database;
         args->logger = logger;
         args->timeout = 5;
         args->new_socket = accept(server_socket, (struct sockaddr *) &server_storage, &address_size);
@@ -119,16 +122,16 @@ void *Server::handle_message(void *voidArgs)
     try{
         message = handler.read_message();
         clientMessage = JSONParser::get_client_message(message);
+        delete message;
     } catch (const std::exception& e) {
         args->logger->error(e.what());
         auto server_message =  MessageHandler::server_error_message(e.what());
         handler.send_message(server_message);
-
         close_single_connection(args);
         return nullptr;
     }
     // return message
-    auto server_message = MessageHandler(clientMessage).run_as_server();
+    auto server_message = MessageHandler(clientMessage, args->database).run_as_server();
     try{
         handler.send_message(server_message);
         args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
@@ -144,6 +147,6 @@ void *Server::handle_message(void *voidArgs)
 void Server::close_single_connection(thread_args *args)
 {
     close((args->new_socket));
-    delete args;
     args->logger->info("end of thread for socket: " + std::to_string(args->new_socket));
+    delete args;
 }

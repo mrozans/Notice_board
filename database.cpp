@@ -2,12 +2,6 @@
 #include <vector>
 #include <utility>
 #include <pqxx/pqxx>
-int main(int argc, char *argv[])
-{
-    std::string connection_string = "dbname = d76gv3n4db0gh3 user = okvktqrnllnttg password = ea7ec25c8cff047422240fbeba3e569edfbcdfb4b516c3e0cd5784568da4734a hostaddr = 54.247.169.129 port = 5432";
-    auto db = new Database(connection_string);
-    delete db;
-}
 
 Database::Database(std::string connection_string)
 {
@@ -59,7 +53,7 @@ pqxx::result Database::select_with_specified_attribute(const std::string& table,
     }
 }
 
-int Database::update(const std::string& table, const std::string& attribute, const std::string& where_attribute, const std::string& value, const std::string& new_value)
+std::string Database::update(const std::string& table, const std::string& attribute, const std::string& where_attribute, const std::string& value, const std::string& new_value)
 {
     try
     {
@@ -69,23 +63,23 @@ int Database::update(const std::string& table, const std::string& attribute, con
         W.exec(sql);
         W.commit();
         C.disconnect();
-        return 0;
+        return "1";
     }
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        return 1;
+        return "0";
     }
 }
 
-int Database::insert(const std::string& table, std::vector<std::string> attributes, std::vector<std::pair<std::string, bool>> values)
+std::string Database::insert(const std::string& table, std::vector<std::string> attributes, std::vector<std::pair<std::string, bool>> values)
 {
     try
     {
         pqxx::connection C(connection_string);
-        if(attributes.size() != values.size()) return 1;
+        if(attributes.size() != values.size()) return std::to_string(1);
         std::string sql1, sql2;
-        for(int i = 0; i < attributes.size(); i++)
+        for(unsigned int i = 0; i < attributes.size(); i++)
         {
             if(i != 0)
             {
@@ -106,16 +100,16 @@ int Database::insert(const std::string& table, std::vector<std::string> attribut
         W.exec(sql);
         W.commit();
         C.disconnect();
-        return 0;
+        return "1";
     }
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        return 1;
+        return "0";
     }
 }
 
-int Database::delete_record(const std::string& table, const std::string& id)
+std::string Database::delete_record(const std::string& table, const std::string& id)
 {
     try
     {
@@ -125,16 +119,16 @@ int Database::delete_record(const std::string& table, const std::string& id)
         W.exec(sql);
         W.commit();
         C.disconnect();
-        return 0;
+        return "1";
     }
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        return 1;
+        return "0";
     }
 }
 
-int Database::delete_record_form_intersection_table(const std::string& category_id, const std::string& user_id)
+std::string Database::delete_record_form_intersection_table(const std::string& category_id, const std::string& user_id)
 {
     try
     {
@@ -144,12 +138,12 @@ int Database::delete_record_form_intersection_table(const std::string& category_
         W.exec(sql);
         W.commit();
         C.disconnect();
-        return 0;
+        return "1";
     }
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        return 1;
+        return "0";
     }
 }
 
@@ -194,26 +188,50 @@ std::vector<std::string> Database::select_ip_where_category(const std::string& c
     }
 }
 
-std::vector<std::string> Database::select_user_where_fingerprint(const std::string& fingerprint)
+std::string Database::select_user_where_fingerprint(const std::string& fingerprint)
 {
     try
     {
         pqxx::connection C(connection_string);
-        std::string sql = "SELECT users.id FROM users INNER JOIN clients ON users.id = clients.user_id WHERE clients.fingerprint='" + fingerprint + "';";
+        std::string sql = "SELECT users.email FROM users INNER JOIN clients ON users.id = clients.user_id WHERE clients.fingerprint='" + fingerprint + "';";
         pqxx::nontransaction N(C);
         pqxx::result R(N.exec(sql));
         C.disconnect();
-        std::vector<std::string> result;
+        std::string result;
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
-            result.insert(result.end(), c[0].as<std::string>());
+            result = c[0].as<std::string>();
         }
         return result;
     }
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        std::vector<std::string> result;
+        std::string result = "0";
+        return result;
+    }
+}
+
+std::string Database::select_owner_email_where_message_id(const std::string& message_id)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "SELECT u.email FROM users u INNER JOIN categories ca ON u.id = ca.owner_id INNER JOIN messages m ON m.category_id = ca.id WHERE m.id = '" + message_id + "';";
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        std::string result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            result = c[0].as<std::string>();
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        std::string result = "0";
         return result;
     }
 }
@@ -286,12 +304,12 @@ std::vector<name_id> Database::select_user_categories(const std::string& user_id
         return result;
     }
 }
-int Database::update_ip_where_fingerprint(const std::string& fingerprint, const std::string& ip)
+std::string Database::update_ip_where_fingerprint(const std::string& fingerprint, const std::string& ip)
 {
     return update("clients", "ip_address", "fingerprint", fingerprint, ip);
 }
 
-int Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage)
+std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage)
 {
     std::vector<std::string> attributes;
     std::vector<std::pair <std::string, bool>> values;
@@ -310,7 +328,18 @@ int Database::insert_into_messages(const std::string& category_id, const std::st
     return insert("messages", attributes, values);
 }
 
-int Database::delete_message_with_id(const std::string& id)
+std::string Database::delete_message_with_id(const std::string& id, const std::string& fingerprint)
 {
-    return delete_record("messages", id);
+    try
+    {
+        if(select_user_where_fingerprint(fingerprint) == select_owner_email_where_message_id(id))
+            return delete_record("messages", id);
+        else
+            return "";
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return "";
+    }
 }

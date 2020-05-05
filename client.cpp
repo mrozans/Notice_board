@@ -3,7 +3,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <pthread.h>
-#include <stdio.h>
+#include <cstdio>
 #include "client.h"
 
 int main(int argc, char *argv[])
@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
     client->connect_to_server();
     pthread_t tid;
-    if(pthread_create(&tid, nullptr, client->read_message, client->args) != 0)
+    if(pthread_create(&tid, nullptr, Client::read_message, client->args) != 0)
     {
         perror("Opening listening thread");
         return 1;

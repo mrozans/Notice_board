@@ -2,9 +2,9 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <zconf.h>
@@ -17,16 +17,16 @@ private:
         struct sockaddr_in ipv4;
         struct sockaddr_in6 ipv6;
     };
-    
+
     char *server_name, *port;
-    int sock;
-    sockaddr_t server;
-    struct hostent *hp;
+    int sock{};
+    sockaddr_t server{};
+    struct hostent *hp{};
     struct thread_args {
         int socket;
     };
 public:
-    thread_args *args;
+    thread_args *args{};
 
     Client(char *server_name, char *port) : server_name(server_name), port(port) { }
 
@@ -40,7 +40,7 @@ public:
 
     int send(char *message)
     {
-        if(connect(sock, (struct sockaddr *) &server, sizeof server) == -1) 
+        if(connect(sock, (struct sockaddr *) &server, sizeof server) == -1)
         {
             perror("Connecting stream socket");
             return 1;
@@ -55,7 +55,7 @@ public:
         return 0;
     }
 
-    int disconnect()
+    int disconnect() const
     {
         close(sock);
         return 0;
@@ -70,7 +70,7 @@ public:
         {
             buffer[i] = '\0';
         }
-        time_t current_time = time(NULL);
+        time_t current_time = time(nullptr);
         while(true)
         {
             if(read(args->socket, buffer, 40) > 1)
@@ -78,7 +78,7 @@ public:
                 printf("%s\n", buffer);
                 break;
             }
-            if(time(NULL) - current_time > 10)
+            if(time(nullptr) - current_time > 10)
             {
                 printf("no confirmation form server\n");
                 break;
@@ -90,7 +90,7 @@ public:
     }
 
 private:
-    bool check_if_ipv6(char *ip)
+    static bool check_if_ipv6(const char *ip)
     {
         for(int i = 0; ip[i] != '\0'; i++)
             if(ip[i] == ':') return true;
@@ -115,7 +115,7 @@ private:
 
         hp = gethostbyname2(server_name, AF_INET);
 
-        if(hp == (struct hostent *) 0) 
+        if(hp == (struct hostent *) nullptr)
         {
             std::cout << "Unknown host: " << server_name << std::endl;
             return 1;
@@ -123,7 +123,7 @@ private:
 
 
         memcpy((char *) &server.ipv4.sin_addr, (char *) hp->h_addr, hp->h_length);
-        
+
         server.ipv4.sin_port = htons(atoi(port));
 
         return 0;
@@ -146,14 +146,14 @@ private:
 
         hp = gethostbyname2(server_name, AF_INET6);
 
-        if(hp == (struct hostent *) 0) 
+        if(hp == (struct hostent *) nullptr)
         {
             std::cout << "Unknown host: " << server_name << std::endl;
             return 1;
         }
 
         memcpy((char *) &server.ipv6.sin6_addr, (char *) hp->h_addr, hp->h_length);
-        
+
         server.ipv6.sin6_port = htons(atoi(port));
 
         return 0;
@@ -161,7 +161,7 @@ private:
 
     int send_to_ipv4(char *message)
     {
-        if(connect(sock, (struct sockaddr *) &server.ipv4, sizeof server.ipv4) == -1) 
+        if(connect(sock, (struct sockaddr *) &server.ipv4, sizeof server.ipv4) == -1)
         {
             perror("Connecting stream socket");
             return 1;
@@ -172,7 +172,7 @@ private:
 
     int send_to_ipv6(char *message)
     {
-        if(connect(sock, (struct sockaddr *) &server.ipv6, sizeof server.ipv6) == -1) 
+        if(connect(sock, (struct sockaddr *) &server.ipv6, sizeof server.ipv6) == -1)
         {
             perror("Connecting stream socket");
             return 1;
@@ -181,7 +181,7 @@ private:
         return send_message(message);
     }
 
-    int send_message(char *message)
+    int send_message(char *message) const
     {
         if(write(sock, message, (strlen(message) + 1) * sizeof(char)) == -1)
         {
@@ -191,6 +191,4 @@ private:
 
         return 0;
     }
-
-
 };
