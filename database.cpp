@@ -68,7 +68,7 @@ std::string Database::update(const std::string& table, const std::string& attrib
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        return "0";
+        return "-1";
     }
 }
 
@@ -105,7 +105,7 @@ std::string Database::insert(const std::string& table, std::vector<std::string> 
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        return "0";
+        return "-1";
     }
 }
 
@@ -124,7 +124,7 @@ std::string Database::delete_record(const std::string& table, const std::string&
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        return "0";
+        return "-1";
     }
 }
 
@@ -143,7 +143,7 @@ std::string Database::delete_record_form_intersection_table(const std::string& c
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        return "0";
+        return "-1";
     }
 }
 
@@ -207,8 +207,7 @@ std::string Database::select_user_where_fingerprint(const std::string& fingerpri
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        std::string result = "0";
-        return result;
+        return "-1";
     }
 }
 
@@ -231,8 +230,7 @@ std::string Database::select_owner_email_where_message_id(const std::string& mes
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        std::string result = "0";
-        return result;
+        return "-1";
     }
 }
 
@@ -311,6 +309,13 @@ std::string Database::update_ip_where_fingerprint(const std::string& fingerprint
 
 std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage)
 {
+//    std::vector<name_id> n = select_user_categories(user_id);
+//    bool belong = false;
+//    for(auto & i : n)
+//    {
+//        if(i.id == category_id) belong = true;
+//    }
+//    if(!belong) return "-1";
     std::vector<std::string> attributes;
     std::vector<std::pair <std::string, bool>> values;
     attributes.insert(attributes.begin(), "updated_at");
