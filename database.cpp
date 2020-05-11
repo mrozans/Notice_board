@@ -1,3 +1,8 @@
+/**
+ * @authors Tomasz Jóźwik, Marcin Różański
+ *
+ */
+
 #include "database.h"
 #include <vector>
 #include <utility>

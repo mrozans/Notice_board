@@ -1,3 +1,8 @@
+/**
+ * @authors Tomasz Jóźwik, Marcin Różański
+ *
+ */
+
 #include <ctime>
 #include <iostream>
 #include <netinet/in.h>

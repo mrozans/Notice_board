@@ -13,6 +13,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <nlohmann/json.hpp>
+#include <cstdlib>
 #include "RequestHandler.h"
 #include "server.h"
 #include "JSONParser.h"
@@ -29,7 +30,13 @@ int main(int argc, char *argv[])
 
 Server::Server(in6_addr addr, uint16_t port_number): addr(addr), port(port_number)
 {
-    this->database =  Database("dbname = d76gv3n4db0gh3 user = okvktqrnllnttg password = ea7ec25c8cff047422240fbeba3e569edfbcdfb4b516c3e0cd5784568da4734a hostaddr = 54.247.169.129 port = 5432");
+    std::string db_name = getenv("DATABASE_NAME") ? getenv("DATABASE_NAME") : "noticeboard",
+                db_user = getenv("DATABASE_USER") ? getenv("DATABASE_USER") : "noticeboard",
+                db_password = getenv("DATABASE_PASSWORD") ? getenv("DATABASE_PASSWORD") : "noticeboard",
+                db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "localhost",
+                db_port = getenv("DATABASE_PORT") ? getenv("DATABASE_PORT") : "5432";
+
+    this->database = Database("dbname =" + db_name + "user = " + db_user + " password = " + db_password + " hostaddr = " + db_host + " port = " + db_port);
     try
     {
         logger = spdlog::basic_logger_mt("server", "server-logs.txt");
