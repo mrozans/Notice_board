@@ -17,7 +17,7 @@ select_library_configurations(libpqxx)
 
 
 #server
-add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.cpp JSONParser.h MessageHandler.h MessageHandler.cpp database.h database.cpp)
+add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.cpp JSONParser.h Message.h Message.cpp database.h database.cpp)
 #tests
 add_executable(JSONParserTest Tests/JSONParserTest.cpp)
 

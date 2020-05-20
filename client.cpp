@@ -9,23 +9,15 @@
 #include <utility>
 #include "client.h"
 
-void example_client(char const *server_name, uint16_t port, const std::string& token, unsigned short code, std::string body, std::shared_ptr<spdlog::logger> logger);
+void example_client(char const *server_name, uint16_t port, std::shared_ptr<spdlog::logger> logger);
 
-void example_client(char const *server_name, uint16_t port, const std::string& token, unsigned short code, std::string body, std::shared_ptr<spdlog::logger> logger)
+void example_client(char const *server_name, uint16_t port, std::shared_ptr<spdlog::logger> logger)
 {
-    //set fields
-    JSONParser::client_message clientMessage = {};
-    clientMessage.body = std::move(body);
-    clientMessage.code = code;
-    clientMessage.token = token;
     //create new connection
     JSONParser::server_message server_response{};
     try{
         auto client = Client(server_name, port, 5, std::move(logger));
-        //send message
-        client.send(clientMessage);
-        //get response
-        server_response = client.read_message();
+        server_response = client.authorization("my_token");
     } catch (const std::exception &e) {
         logger->error(e.what());
     }
@@ -49,7 +41,7 @@ int main(int argc, char *argv[])
     }
     logger->flush_on(spdlog::level::info);
 
-    example_client("127.0.0.1", 57076, "token", 1, "body", logger);
+    example_client("127.0.0.1", 57076, logger);
 }
 
 void Client::connect_to_server()
@@ -68,7 +60,7 @@ void Client::send(const JSONParser::client_message& message)
     handler.send_message(message);
 }
 
-JSONParser::server_message Client::read_message()
+JSONParser::server_message Client::receive()
 {
     return JSONParser::get_server_message(handler.read_message());
 }
@@ -132,4 +124,52 @@ void Client::connect_to_ipv6()
     {
         throw std::logic_error("Connecting stream socket");
     }
+}
+
+JSONParser::server_message Client::send_and_receive(const JSONParser::client_message &message) noexcept(false)
+{
+    send(message);
+    return receive();
+}
+
+JSONParser::server_message Client::authorization(const std::string& token) noexcept(false)
+{
+    JSONParser::client_message message = {
+            token,
+            1,
+            ""
+    };
+    return send_and_receive(message);
+}
+
+JSONParser::server_message Client::create_new_message(const std::string& token) noexcept(false)
+{
+    //todo
+    JSONParser::client_message message = {
+            token,
+            2,
+            ""
+    };
+    return send_and_receive(message);
+}
+
+JSONParser::server_message Client::get_new_messages(const std::string& token) noexcept(false)
+{
+    //todo
+    JSONParser::client_message message = {
+            token,
+            3,
+            ""
+    };
+    return send_and_receive(message);
+}
+
+JSONParser::server_message Client::remove_message(const std::string& token, const std::string& message_id) noexcept(false)
+{
+    JSONParser::client_message message = {
+            token,
+            4,
+            message_id
+    };
+    return send_and_receive(message);
 }

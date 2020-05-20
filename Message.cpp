@@ -2,11 +2,11 @@
  * @authors Tomasz Mazur, Marcin Mozolewski
  *
  */
-#include "MessageHandler.h"
+#include "Message.h"
 
 #include <nlohmann/json.hpp>
 
-JSONParser::server_message MessageHandler::run_as_server()
+JSONParser::server_message Message::run()
 {
     switch (client_message.code) {
         case 0:
@@ -24,17 +24,7 @@ JSONParser::server_message MessageHandler::run_as_server()
     }
 }
 
-JSONParser::client_message MessageHandler::run_as_client() const
-{
-    switch (server_message.code) {
-        case 0:
-            return client_error_message("error code");
-        default:
-            return client_error_message("error_code");
-    }
-}
-
-JSONParser::server_message MessageHandler::server_error_message(std::string message_body)
+JSONParser::server_message Message::server_error_message(std::string message_body)
 {
     JSONParser::server_message serverMessage = {};
     serverMessage.code = 0;
@@ -42,23 +32,14 @@ JSONParser::server_message MessageHandler::server_error_message(std::string mess
     return serverMessage;
 }
 
-JSONParser::client_message MessageHandler::client_error_message(std::string message_body)
-{
-    JSONParser::client_message clientMessage = {};
-    clientMessage.token = "";
-    clientMessage.code = 0;
-    clientMessage.body = std::move(message_body);
-    return clientMessage;
-}
-
-JSONParser::server_message MessageHandler::remove_message()
+JSONParser::server_message Message::remove_message()
 {
     this->server_message.code = 1;
     this->server_message.body = database.delete_message_with_id(this->client_message.body, this->client_message.token);
     return this->server_message;
 }
 
-JSONParser::server_message MessageHandler::get_new_messages()
+JSONParser::server_message Message::get_new_messages()
 {
     //ToDo
     this->server_message.code = 1;
@@ -66,7 +47,7 @@ JSONParser::server_message MessageHandler::get_new_messages()
     return this->server_message;
 }
 
-JSONParser::server_message MessageHandler::create_new_message()
+JSONParser::server_message Message::create_new_message()
 {
     struct msg {
         std::string cid;
@@ -92,7 +73,7 @@ JSONParser::server_message MessageHandler::create_new_message()
     return this->server_message;
 }
 
-JSONParser::server_message MessageHandler::client_authorization()
+JSONParser::server_message Message::client_authorization()
 {
     this->server_message.code = 1;
     this->server_message.body = database.select_user_where_fingerprint(this->client_message.token);

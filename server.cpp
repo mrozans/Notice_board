@@ -15,7 +15,7 @@
 #include <nlohmann/json.hpp>
 #include "RequestHandler.h"
 #include "server.h"
-#include "MessageHandler.h"
+#include "Message.h"
 
 int main(int argc, char *argv[])
 {
@@ -130,17 +130,15 @@ void *Server::handle_message(void *voidArgs)
         delete message;
     } catch (const std::exception& e) {
         args->logger->error(e.what());
-        auto server_message =  MessageHandler::server_error_message(e.what());
+        auto server_message =  Message::server_error_message(e.what());
         handler.send_message(server_message);
         close_single_connection(args);
         return nullptr;
     }
     std::cout << clientMessage.token << " " << clientMessage.code << " " << clientMessage.body << std::endl;
-    JSONParser::server_message serverMessage{};
-    handler.send_message(serverMessage);
 
     /*return message*/
-    auto server_message = MessageHandler(clientMessage, args->database).run_as_server();
+    auto server_message = Message(clientMessage, args->database).run();
     try{
         handler.send_message(server_message);
         args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
