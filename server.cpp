@@ -13,12 +13,9 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <nlohmann/json.hpp>
-#include <cstdlib>
 #include "RequestHandler.h"
 #include "server.h"
-#include "JSONParser.h"
 #include "MessageHandler.h"
-#include "database.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,13 +27,6 @@ int main(int argc, char *argv[])
 
 Server::Server(in6_addr addr, uint16_t port_number): addr(addr), port(port_number)
 {
-    std::string db_name = getenv("DATABASE_NAME") ? getenv("DATABASE_NAME") : "noticeboard",
-                db_user = getenv("DATABASE_USER") ? getenv("DATABASE_USER") : "noticeboard",
-                db_password = getenv("DATABASE_PASSWORD") ? getenv("DATABASE_PASSWORD") : "noticeboard",
-                db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "localhost",
-                db_port = getenv("DATABASE_PORT") ? getenv("DATABASE_PORT") : "5432";
-
-    this->database = Database("dbname =" + db_name + "user = " + db_user + " password = " + db_password + " hostaddr = " + db_host + " port = " + db_port);
     try
     {
         logger = spdlog::basic_logger_mt("server", "server-logs.txt");
@@ -46,6 +36,14 @@ Server::Server(in6_addr addr, uint16_t port_number): addr(addr), port(port_numbe
         std::cout << "Log init failed: " << ex.what() << std::endl;
     }
     logger->flush_on(spdlog::level::info);
+
+    std::string db_name = getenv("DATABASE_NAME") ? getenv("DATABASE_NAME") : "noticeboard",
+            db_user = getenv("DATABASE_USER") ? getenv("DATABASE_USER") : "noticeboard",
+            db_password = getenv("DATABASE_PASSWORD") ? getenv("DATABASE_PASSWORD") : "noticeboard",
+            db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "localhost",
+            db_port = getenv("DATABASE_PORT") ? getenv("DATABASE_PORT") : "5432";
+
+    this->database = Database("dbname =" + db_name + "user = " + db_user + " password = " + db_password + " hostaddr = " + db_host + " port = " + db_port, logger);
 
     server_socket = socket(AF_INET6, SOCK_STREAM, 0);
     if (server_socket == -1)
@@ -138,15 +136,18 @@ void *Server::handle_message(void *voidArgs)
         return nullptr;
     }
     std::cout << clientMessage.token << " " << clientMessage.code << " " << clientMessage.body << std::endl;
-    // return message
-//    auto server_message = MessageHandler(clientMessage, args->database).run_as_server();
-//    try{
-//        handler.send_message(server_message);
-//        args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
-//                           "sent from thread from socket: " + std::to_string(args->new_socket));
-//    } catch (const std::exception& e) {
-//        args->logger->error(e.what());
-//    }
+    JSONParser::server_message serverMessage{};
+    handler.send_message(serverMessage);
+
+    /*return message*/
+    auto server_message = MessageHandler(clientMessage, args->database).run_as_server();
+    try{
+        handler.send_message(server_message);
+        args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
+                           "sent from thread from socket: " + std::to_string(args->new_socket));
+    } catch (const std::exception& e) {
+        args->logger->error(e.what());
+    }
 
     close_single_connection(args);
     return nullptr;

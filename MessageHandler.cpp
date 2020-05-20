@@ -4,7 +4,6 @@
  */
 #include "MessageHandler.h"
 
-#include <utility>
 #include <nlohmann/json.hpp>
 
 JSONParser::server_message MessageHandler::run_as_server()

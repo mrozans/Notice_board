@@ -8,6 +8,7 @@
 #include <pqxx/pqxx>
 #include <iostream>
 #include <utility>
+#include <spdlog/logger.h>
 
 struct name_id
 {
@@ -26,6 +27,8 @@ class Database
 private:
     std::string connection_string;
 
+    std::shared_ptr<spdlog::logger> logger;
+
     pqxx::result select_all(const std::string& table);
 
     pqxx::result select_with_specified_attribute(const std::string& table, const std::string& attribute, const std::string& value, bool key);
@@ -38,7 +41,7 @@ private:
 
     std::string delete_record_form_intersection_table(const std::string& category_id, const std::string& user_id);
 public:
-    explicit Database(std::string connection_string);
+    Database(std::string connection_string, std::shared_ptr<spdlog::logger> logger) : connection_string(std::move(connection_string)), logger(std::move(logger)){}
     explicit Database()= default;
 
     std::string select_ip_where_fingerprint(const std::string& fingerprint);

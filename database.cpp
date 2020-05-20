@@ -4,12 +4,6 @@
  */
 
 #include "database.h"
-#include <utility>
-#include <vector>
-#include <utility>
-#include <pqxx/pqxx>
-
-Database::Database(std::string connection_string) : connection_string(std::move(connection_string)){}
 
 pqxx::result Database::select_all(const std::string& table)
 {
@@ -261,7 +255,7 @@ std::vector<message> Database::select_messages_where_category(const std::string&
         std::cerr<<e.what()<<std::endl;
         std::vector<message> result;
         return result;
-    };
+    }
 
 }
 

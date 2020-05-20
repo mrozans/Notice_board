@@ -12,7 +12,7 @@ RequestHandler::RequestHandler(int socket, std::shared_ptr<spdlog::logger> logge
     timeout.tv_sec = timeout_value;
     if(setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout)) < 0)
     {
-        this->logger->error("socket timeout init");
+        this->logger->warn("socket timeout init");
     }
 }
 
@@ -35,8 +35,6 @@ char *RequestHandler::read_message()
         throw std::logic_error("message size read returned: " + std::to_string(input_message_len_size));
     }
 
-    logger->info("received message size: " + std::string(input_message_len));
-
     unsigned int message_len = str_to_int(input_message_len);
 
     if(message_len <= 1)
@@ -45,7 +43,7 @@ char *RequestHandler::read_message()
     }
     char * message = new char[message_len + 1];
 
-    memset(message, 0, message_len * sizeof(*message));
+    memset(message, '\0', message_len * sizeof(*message));
 
     ssize_t received_message_size = recv(socket, message, message_len, 0);
 
@@ -54,6 +52,8 @@ char *RequestHandler::read_message()
         throw std::logic_error("received message size: " + std::to_string(received_message_size) +
         " ,when expecting: " + std::to_string(message_len));
     }
+    //set last char to end char. recv removes all old values form buffer
+    message[message_len] = '\0';
 
     logger->info("received message: " + std::string(message));
 
@@ -72,7 +72,7 @@ void RequestHandler::send_message(const std::string& message) const noexcept(fal
     {
         throw std::logic_error("message is too long");
     }
-    auto message_length  = std::string(len, '0') + std::to_string(message.length());
+    auto message_length  = std::string((unsigned int) len, '0') + std::to_string(message.length());
 
     std::string message_to_client = message_length + message;
 

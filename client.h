@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <utility>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <zconf.h>
@@ -20,45 +21,37 @@
 
 class Client
 {
-private:
+    char const *server_name;
+    uint16_t port;
+    int timeout;
+    std::shared_ptr<spdlog::logger> logger;
+    RequestHandler handler;
     union sockaddr_t
     {
         struct sockaddr_in ipv4;
         struct sockaddr_in6 ipv6;
-    };
-
-    char const *server_name, *port;
+    } server{};
     int sock{};
-    sockaddr_t server{};
-    struct hostent *hp{};
 
-    int timeout;
 public:
-    Client(char const *server_name, char const *port, int timeout) : server_name(server_name), port(port), timeout(timeout)
+    Client(char const *server_name, uint16_t port, int timeout, std::shared_ptr<spdlog::logger> logger) noexcept(false) : server_name(server_name), port(port), timeout(timeout), logger(std::move(logger))
     {
-        try
-        {
-            logger = spdlog::basic_logger_mt("client", "client-logs.txt");
-        }
-        catch (const spdlog::spdlog_ex &ex)
-        {
-            std::cout << "Log init failed: " << ex.what() << std::endl;
-        }
-        logger->flush_on(spdlog::level::info);
+        connect_to_server();
     };
 
-    void connect_to_server();
+    ~Client()
+    {
+        close(sock);
+    };
 
     void send(const JSONParser::client_message& message);
 
-    void disconnect() const;
-
-    static void read_message(void *voidArgs);
+    JSONParser::server_message read_message();
 
 private:
+
     static bool check_if_ipv6(const char *ip);
-    void connect_to_ipv4();
-    void connect_to_ipv6();
-    std::shared_ptr<spdlog::logger> logger;
-    RequestHandler handler;
+    void connect_to_ipv4() noexcept(false);;
+    void connect_to_ipv6() noexcept(false);;
+    void connect_to_server() noexcept(false);
 };

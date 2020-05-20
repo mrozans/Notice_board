@@ -23,11 +23,11 @@ public:
 
     void send_message(JSONParser::server_message message) const;
     void send_message(JSONParser::client_message message) const;
-    void send_message(const std::string& message) const noexcept(false);
 
     char *read_message() noexcept(false);
 
 private:
+    void send_message(const std::string& message) const noexcept(false);
     void send_message(char *message, size_t message_size) const noexcept(false);
 
     static unsigned int str_to_int(char *buff);
