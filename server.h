@@ -6,8 +6,10 @@
 #ifndef TIN_TABLICA_OGLOSZEN_SERVER_H
 #define TIN_TABLICA_OGLOSZEN_SERVER_H
 
+#include <netinet/in.h>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/base_sink.h"
+#include "database.h"
 
 class Server{
 public:
@@ -24,7 +26,9 @@ private:
         int new_socket;
         std::shared_ptr<spdlog::logger> logger;
         int timeout;
+        Database database;
     };
+    Database database;
 //methods
 public:
     explicit Server(in6_addr addr = in6addr_any, uint16_t port_number = 0);

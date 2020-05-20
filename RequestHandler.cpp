@@ -12,7 +12,7 @@ RequestHandler::RequestHandler(int socket, std::shared_ptr<spdlog::logger> logge
     timeout.tv_sec = timeout_value;
     if(setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout)) < 0)
     {
-        this->logger->error("socket timeout init");
+        this->logger->warn("socket timeout init");
     }
 }
 
@@ -35,25 +35,25 @@ char *RequestHandler::read_message()
         throw std::logic_error("message size read returned: " + std::to_string(input_message_len_size));
     }
 
-    logger->info("received message size: " + std::string(input_message_len));
-
-    unsigned int message_len = str_to_int(input_message_len) + 1;
+    unsigned int message_len = str_to_int(input_message_len);
 
     if(message_len <= 1)
     {
         throw std::logic_error("message_len must be > 1 when is: " + std::to_string(message_len));
     }
-    char * message = new char[message_len];
+    char * message = new char[message_len + 1];
 
-    memset(message, 0, message_len * sizeof(*message));
+    memset(message, '\0', message_len * sizeof(*message));
 
     ssize_t received_message_size = recv(socket, message, message_len, 0);
 
-    if(received_message_size != message_len - 1)
+    if(received_message_size != message_len)
     {
         throw std::logic_error("received message size: " + std::to_string(received_message_size) +
-        " ,when expecting: " + std::to_string(message_len - 1));
+        " ,when expecting: " + std::to_string(message_len));
     }
+    //set last char to end char. recv removes all old values form buffer
+    message[message_len] = '\0';
 
     logger->info("received message: " + std::string(message));
 
@@ -67,9 +67,14 @@ unsigned int RequestHandler::str_to_int(char *buff)
 
 void RequestHandler::send_message(const std::string& message) const noexcept(false)
 {
-    int message_length = message.length();
+    int len = (int)((int)INPUT_MESSAGE_LEN - std::to_string((int)message.length()).length());
+    if(len < 0)
+    {
+        throw std::logic_error("message is too long");
+    }
+    auto message_length  = std::string((unsigned int) len, '0') + std::to_string(message.length());
 
-    std::string message_to_client = std::to_string(message_length) + "\0" + message;
+    std::string message_to_client = message_length + message;
 
     send_message(const_cast<char*>(message_to_client.c_str()), message_to_client.length());
 }
@@ -77,4 +82,9 @@ void RequestHandler::send_message(const std::string& message) const noexcept(fal
 void RequestHandler::send_message(JSONParser::server_message message) const
 {
     send_message(JSONParser::generate_server_message(std::move(message)));
+}
+
+void RequestHandler::send_message(JSONParser::client_message message) const
+{
+    send_message(JSONParser::generate_client_message(std::move(message)));
 }
