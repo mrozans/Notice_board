@@ -4,14 +4,12 @@
  */
 
 #include "database.h"
+#include <utility>
 #include <vector>
 #include <utility>
 #include <pqxx/pqxx>
 
-Database::Database(std::string connection_string)
-{
-    this->connection_string = std::move(connection_string);
-}
+Database::Database(std::string connection_string) : connection_string(std::move(connection_string)){}
 
 pqxx::result Database::select_all(const std::string& table)
 {

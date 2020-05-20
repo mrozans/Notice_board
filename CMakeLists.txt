@@ -44,4 +44,5 @@ endif()
 
 target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json -lpqxx)
 
-add_executable(client client.h client.cpp)
+add_executable(client client.h client.cpp JSONParser.cpp JSONParser.h RequestHandler.cpp RequestHandler.h)
+target_link_libraries(client PRIVATE nlohmann_json::nlohmann_json -lpqxx)

@@ -10,7 +10,7 @@
 
 class RequestHandler{
 private:
-    int socket;
+    int socket{};
     std::shared_ptr<spdlog::logger> logger;
 
     const static unsigned int INPUT_MESSAGE_LEN = 4;
@@ -18,9 +18,11 @@ private:
     struct timeval timeout{};
 
 public:
+    RequestHandler()= default;
     RequestHandler(int socket,std::shared_ptr<spdlog::logger> logger, int timeout);
 
     void send_message(JSONParser::server_message message) const;
+    void send_message(JSONParser::client_message message) const;
     void send_message(const std::string& message) const noexcept(false);
 
     char *read_message() noexcept(false);

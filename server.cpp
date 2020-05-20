@@ -22,7 +22,7 @@
 
 int main(int argc, char *argv[])
 {
-    Server s = Server(in6addr_any, 57079);
+    Server s = Server(in6addr_any, 57076);
     s.configure_server();
     s.start_server(40);
     //s.stop();
@@ -137,15 +137,16 @@ void *Server::handle_message(void *voidArgs)
         close_single_connection(args);
         return nullptr;
     }
+    std::cout << clientMessage.token << " " << clientMessage.code << " " << clientMessage.body << std::endl;
     // return message
-    auto server_message = MessageHandler(clientMessage, args->database).run_as_server();
-    try{
-        handler.send_message(server_message);
-        args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
-                           "sent from thread from socket: " + std::to_string(args->new_socket));
-    } catch (const std::exception& e) {
-        args->logger->error(e.what());
-    }
+//    auto server_message = MessageHandler(clientMessage, args->database).run_as_server();
+//    try{
+//        handler.send_message(server_message);
+//        args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
+//                           "sent from thread from socket: " + std::to_string(args->new_socket));
+//    } catch (const std::exception& e) {
+//        args->logger->error(e.what());
+//    }
 
     close_single_connection(args);
     return nullptr;
