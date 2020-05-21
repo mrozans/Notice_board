@@ -13,6 +13,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <nlohmann/json.hpp>
+#include <netdb.h>
 #include "RequestHandler.h"
 #include "server.h"
 #include "Message.h"
@@ -43,7 +44,16 @@ Server::Server(in6_addr addr, uint16_t port_number): addr(addr), port(port_numbe
             db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "localhost",
             db_port = getenv("DATABASE_PORT") ? getenv("DATABASE_PORT") : "5432";
 
-    this->database = Database("dbname =" + db_name + "user = " + db_user + " password = " + db_password + " hostaddr = " + db_host + " port = " + db_port, logger);
+    auto db_host_hostent = gethostbyname2(db_host.c_str(), AF_INET);
+    if(db_host_hostent == nullptr)
+    {
+        logger->critical("Cannot connect to database! Unknown host");
+        return;
+    }
+
+    std::string db_host_ip = inet_ntoa(*((struct in_addr*) db_host_hostent->h_addr_list[0]));
+
+    this->database = Database("dbname = " + db_name + " user = " + db_user + " password = " + db_password + " hostaddr = " + db_host_ip + " port = " + db_port, logger);
 
     server_socket = socket(AF_INET6, SOCK_STREAM, 0);
     if (server_socket == -1)
