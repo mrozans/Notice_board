@@ -49,18 +49,14 @@ JSONParser::server_message Message::get_new_messages()
 
 JSONParser::server_message Message::create_new_message()
 {
-    struct msg {
-        std::string cid;
-        std::string title;
-        std::string content;
-    };
-    msg msg_json;
+    JSONParser::message_container message_container;
     try {
         nlohmann::json j = nlohmann::json::parse(client_message.body);
-        msg_json = msg {
+        message_container = JSONParser::message_container {
                 j["cid"].get<std::string>(),
                 j["title"].get<std::string>(),
-                j["content"].get<std::string>()
+                j["content"].get<std::string>(),
+                j["days"].get<std::string>()
         };
     } catch (const std::exception& e) {
         this->server_message.code = 0;
@@ -69,7 +65,7 @@ JSONParser::server_message Message::create_new_message()
     }
 
     this->server_message.code = 1;
-    this->server_message.body = database.insert_into_messages(msg_json.cid, msg_json.title, msg_json.content);
+    this->server_message.body = database.insert_into_messages(message_container.cid, message_container.title, message_container.content, message_container.days);
     return this->server_message;
 }
 

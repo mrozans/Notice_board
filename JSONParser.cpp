@@ -7,13 +7,23 @@
 
 using json = nlohmann::json;
 
+std::string JSONParser::generate_message_container(JSONParser::message_container container)
+{
+    json j;
+    j["cid"] = container.cid;
+    j["title"] = container.title;
+    j["content"] = container.content;
+    j["days"] = container.days;
+    return j.dump();
+}
+
 std::string JSONParser::generate_client_message(JSONParser::client_message message)
 {
     json j;
     j["token"] = message.token;
     j["code"] = message.code;
     j["body"] = message.body;
-    return  j.dump();
+    return j.dump();
 }
 
 std::string JSONParser::generate_server_message(JSONParser::server_message message)
@@ -27,7 +37,7 @@ std::string JSONParser::generate_server_message(JSONParser::server_message messa
 JSONParser::client_message JSONParser::get_client_message(const std::string& message)
 {
 
-    json j= json::parse(message);
+    json j = json::parse(message);
     return {
             j["token"].get<std::string>(),
             (j["code"].get<unsigned short>()),
@@ -37,7 +47,7 @@ JSONParser::client_message JSONParser::get_client_message(const std::string& mes
 
 JSONParser::server_message JSONParser::get_server_message(const std::string& message)
 {
-    json j= json::parse(message);
+    json j = json::parse(message);
     return {
             (j["code"].get<unsigned short>()),
             j["body"].get<std::string>()

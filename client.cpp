@@ -38,11 +38,15 @@ void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logge
             case 5:
                 if(std::string(argv[1]) == "2")
                 {
-                    // create new message
-                }
-                else if(std::string(argv[1]) == "3")
-                {
                     server_response = client.remove_message(token, argv[4]);
+                }
+                else
+                    throw std::logic_error("Invalid arguments");
+                break;
+            case 8:
+                if(std::string(argv[1]) == "3")
+                {
+                    server_response = client.create_new_message(token, argv[4], argv[5], argv[6], argv[7]);
                 }
                 else
                     throw std::logic_error("Invalid arguments");
@@ -178,13 +182,21 @@ JSONParser::server_message Client::authorization(const std::string& token) noexc
     return send_and_receive(message);
 }
 
-JSONParser::server_message Client::create_new_message(const std::string& token) noexcept(false)
+JSONParser::server_message Client::create_new_message(const std::string& token, const std::string& cid, const std::string &title, const std::string &content, const std::string &days) noexcept(false)
 {
-    //todo
+    JSONParser::message_container container = {
+            cid,
+            title,
+            content,
+            days
+    };
+
+    auto container_dump = JSONParser::generate_message_container(container);
+
     JSONParser::client_message message = {
             token,
             2,
-            ""
+            container_dump
     };
     return send_and_receive(message);
 }

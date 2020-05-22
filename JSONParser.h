@@ -18,7 +18,14 @@ public:
         unsigned short code;
         std::string body;
     };
+    struct message_container{
+        std::string cid;
+        std::string title;
+        std::string content;
+        std::string days;
+    };
 
+    static std::string generate_message_container(message_container container);
     static std::string generate_client_message(client_message message);
     static std::string generate_server_message(server_message message);
 

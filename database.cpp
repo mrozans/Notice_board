@@ -304,8 +304,10 @@ std::string Database::update_ip_where_fingerprint(const std::string& fingerprint
     return update("clients", "ip_address", "fingerprint", fingerprint, ip);
 }
 
-std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage)
+std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage, const std::string& number_of_days)
 {
+    //todo validate number of days - if it is valid
+
 //    std::vector<name_id> n = select_user_categories(user_id);
 //    bool belong = false;
 //    for(auto & i : n)
@@ -323,7 +325,7 @@ std::string Database::insert_into_messages(const std::string& category_id, const
     attributes.insert(attributes.begin(), "category_id");
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP", false));
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP", false));
-    values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP + INTERVAL '7 day'", false));
+    values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP + INTERVAL '" + number_of_days + " day'", false));
     values.insert(values.begin(), std::make_pair(massage, true));
     values.insert(values.begin(), std::make_pair(title, true));
     values.insert(values.begin(), std::make_pair(category_id, false));
