@@ -9,27 +9,63 @@
 #include <utility>
 #include "client.h"
 
-void example_client(char const *server_name, uint16_t port, std::shared_ptr<spdlog::logger> logger);
+void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logger);
 
-void example_client(char const *server_name, uint16_t port, std::shared_ptr<spdlog::logger> logger)
+void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logger)
 {
     //create new connection
+    auto token = "a8:9f:67:d3:ee:08:90:3c:5c:7d:a6:4b:23:e5:7f:98:c6:f6:94:bd"; //todo
+
     JSONParser::server_message server_response{};
-    try{
-        auto client = Client(server_name, port, 5, std::move(logger));
-        server_response = client.authorization("my_token");
-    } catch (const std::exception &e) {
+    try
+    {
+        auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
+
+        switch (argc)
+        {
+            case 4:
+                if(std::string(argv[1]) == "0")
+                {
+                    // database updater mode
+                }
+                else if(std::string(argv[1]) == "1")
+                {
+                    server_response = client.authorization(token);
+                }
+                else
+                    throw std::logic_error("Invalid arguments");
+                break;
+            case 5:
+                if(std::string(argv[1]) == "2")
+                {
+                    // create new message
+                }
+                else if(std::string(argv[1]) == "3")
+                {
+                    server_response = client.remove_message(token, argv[4]);
+                }
+                else
+                    throw std::logic_error("Invalid arguments");
+                break;
+            default:
+                throw std::logic_error("Invalid arguments");
+        }
+
+        std::cout << server_response.body << " " << server_response.code << std::endl;
+    }
+    catch (const std::exception &e)
+    {
         logger->error(e.what());
     }
-
-    std::cout << server_response.body << " " << server_response.code << std::endl;
-    //do something with response message. better close connection before message operations
-    //end connection
-    //clint will be automatically destroyed, because
 }
 
 int main(int argc, char *argv[])
 {
+    if(argc < 4)
+    {
+        throw std::logic_error("Invalid arguments");
+    }
+
     std::shared_ptr<spdlog::logger> logger;
     try
     {
@@ -41,7 +77,7 @@ int main(int argc, char *argv[])
     }
     logger->flush_on(spdlog::level::info);
 
-    example_client("127.0.0.1", 57076, logger);
+    handle_request(argc, argv, logger);
 }
 
 void Client::connect_to_server()

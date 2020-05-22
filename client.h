@@ -60,7 +60,7 @@ protected:
 private:
 
     static bool check_if_ipv6(const char *ip);
-    void connect_to_ipv4() noexcept(false);;
-    void connect_to_ipv6() noexcept(false);;
+    void connect_to_ipv4() noexcept(false);
+    void connect_to_ipv6() noexcept(false);
     void connect_to_server() noexcept(false);
 };
