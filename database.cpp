@@ -244,8 +244,8 @@ std::vector<message> Database::select_messages_where_category(const std::string&
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
             message m;
-            m.title = c[1].as<std::string>();
-            m.content = c[2].as<std::string>();
+            m.title = c[2].as<std::string>();
+            m.content = c[3].as<std::string>();
             result.insert(result.end(), m);
         }
         return result;
@@ -254,6 +254,68 @@ std::vector<message> Database::select_messages_where_category(const std::string&
     {
         std::cerr<<e.what()<<std::endl;
         std::vector<message> result;
+        return result;
+    }
+
+}
+
+full_message Database::select_message_where_id(const std::string& id)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "SELECT * FROM messages WHERE id = '" + id + "'";
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        full_message result;
+        result.title = "";
+        result.content = "";
+        result.category_id = "";
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            result.title = c[2].as<std::string>();
+            result.content = c[3].as<std::string>();
+            result.category_id = c[1].as<std::string>();
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        full_message result;
+        result.title = "";
+        result.content = "";
+        result.category_id = "";
+        return result;
+    }
+
+}
+
+std::vector<message_info> Database::select_messages_info(const std::string& client_id, bool first)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "SELECT * FROM pending_changes WHERE client_id = '" + client_id + "'";
+        if(first) sql += " LIMIT 1";
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        std::vector<message_info> result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            message_info m;
+            m.id = c[0].as<std::string>();
+            m.message_id = c[2].as<std::string>();
+            result.insert(result.end(), m);
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        std::vector<message_info> result;
         return result;
     }
 

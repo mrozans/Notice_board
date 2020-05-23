@@ -22,6 +22,19 @@ struct message
     std::string content;
 };
 
+struct full_message
+{
+    std::string title;
+    std::string content;
+    std::string category_id;
+};
+
+struct message_info
+{
+    std::string id;
+    std::string message_id;
+};
+
 class Database
 {
 private:
@@ -66,5 +79,9 @@ public:
 
     std::string delete_message_with_id(const std::string& id, const std::string& fingerprint);
 
+    full_message select_message_where_id(const std::string &id);
+
+    std::vector<message_info> select_messages_info(const std::string &client_id, bool first);
 };
+
 #endif
