@@ -391,7 +391,7 @@ std::string Database::update_ip_where_fingerprint(const std::string& fingerprint
     return update("clients", "ip_address", "fingerprint", fingerprint, ip);
 }
 
-std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage, const std::string& number_of_days)
+std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& message, const std::string& number_of_days)
 {
     //todo validate number of days - if it is valid
 
@@ -413,9 +413,24 @@ std::string Database::insert_into_messages(const std::string& category_id, const
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP", false));
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP", false));
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP + INTERVAL '" + number_of_days + " day'", false));
-    values.insert(values.begin(), std::make_pair(massage, true));
+    values.insert(values.begin(), std::make_pair(message, true));
     values.insert(values.begin(), std::make_pair(title, true));
     values.insert(values.begin(), std::make_pair(category_id, false));
+    return insert("messages", attributes, values);
+}
+
+std::string Database::insert_local_message(const std::string& id, const std::string& category, const std::string& title, const std::string& content)
+{
+    std::vector<std::string> attributes;
+    std::vector<std::pair <std::string, bool>> values;
+    attributes.insert(attributes.begin(), "content");
+    attributes.insert(attributes.begin(), "title");
+    attributes.insert(attributes.begin(), "category");
+    attributes.insert(attributes.begin(), "id");
+    values.insert(values.begin(), std::make_pair(content, true));
+    values.insert(values.begin(), std::make_pair(title, true));
+    values.insert(values.begin(), std::make_pair(category, true));
+    values.insert(values.begin(), std::make_pair(id, true));
     return insert("messages", attributes, values);
 }
 
@@ -432,6 +447,18 @@ std::string Database::delete_message_with_id(const std::string& id, const std::s
     {
         std::cerr<<e.what()<<std::endl;
         return "";
+    }
+}
+
+std::string Database::delete_local_record_with_id(const std::string &table, const std::string &id)
+{
+    try
+    {
+        return delete_record(table, id);
+    }
+    catch (const std::exception &e)
+    {
+        throw std::logic_error("Message deletion error");
     }
 }
 

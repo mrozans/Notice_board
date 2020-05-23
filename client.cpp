@@ -7,17 +7,19 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <utility>
+#include <arpa/inet.h>
 #include "client.h"
+#include "database.h"
 
-void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spdlog::logger> logger) noexcept(false);
+void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false);
 
-void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spdlog::logger> logger) noexcept(false)
+void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false)
 {
     std::string body = "-1";
 
     while(true)
     {
-        auto client = Client(argv[2], std::stoi(argv[3]), 5, logger);
+        auto client = Client(server_name.c_str(), server_port, 5, logger);
 
         JSONParser::client_message message;
         message = {
@@ -33,37 +35,45 @@ void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spd
         switch(response.code)
         {
             case 0:
-                // błąd
-                break;
+                logger->error("Server error!");
+                return;
             case 1:
-                // stan aktualny
-                try {
-                    std::cout << response.body << " " << response.code << std::endl;
+                try
+                {
+                    logger->info("Update completed successfully!");
                     return;
                 }
                 catch (const std::exception &e)
                 {
-                    std::cerr<<e.what()<<std::endl;
+                    logger->error("Error occurred while closing the updater!");
+                    return;
                 }
-                break;
             case 2:
-                // wymagane usunięcie wiadomości
-                try {
+                try
+                {
                     message_transfer_container = JSONParser::get_message_transfer_container(response.body);
+
+                    if(database.delete_local_record_with_id("messages", message_transfer_container.id) == "-1")
+                        throw std::logic_error("Message processing error! Message can't be deleted.");
                 }
                 catch (const std::exception &e)
                 {
-                    std::cerr<<e.what()<<std::endl;
+                    logger->error("Message processing error! Message can't be deleted.");
+                    return;
                 }
                 break;
             case 3:
-                // wymagane stworzenie wiadomości
-                try {
+                try
+                {
                     message_transfer_container = JSONParser::get_message_transfer_container(response.body);
+                    if(database.insert_local_message(message_transfer_container.id, message_transfer_container.category,
+                                                     message_transfer_container.title, message_transfer_container.content) == "-1")
+                        throw std::logic_error("Message processing error! Message can't be inserted.");
                 }
                 catch (const std::exception &e)
                 {
-                    std::cerr<<e.what()<<std::endl;
+                    logger->error("Message processing error! Message can't be inserted.");
+                    return;
                 }
         }
 
@@ -73,69 +83,87 @@ void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spd
     }
 }
 
-void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logger);
+void process_requests();
 
-void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logger)
+void process_requests()
 {
-    //create new connection
+
+}
+
+void handle_requests(int argc, char** argv, std::shared_ptr<spdlog::logger> logger);
+
+void handle_requests(int argc, char** argv, std::shared_ptr<spdlog::logger> logger)
+{
+//    //create new connection
     auto token = "c6:1d:99:5a:90:90:4d:be:d8:68:45:05:ba:91:93:32:fb:9b:af:a2"; //todo
+//
+//    JSONParser::server_message server_response{};
+//    try
+//    {
+//        switch (argc)
+//        {
+//            case 4:
+//                if(std::string(argv[1]) == "0")
+//                {
+//                   get_new_messages(token, argv, logger);
+//
+//                   return;
+//                }
+//                else if(std::string(argv[1]) == "1")
+//                {
+//                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
+//                    server_response = client.authorization(token);
+//                }
+//                else
+//                    throw std::logic_error("Invalid arguments");
+//                break;
+//            case 5:
+//                if(std::string(argv[1]) == "2")
+//                {
+//                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
+//                    server_response = client.remove_message(token, argv[4]);
+//                }
+//                else
+//                    throw std::logic_error("Invalid arguments");
+//                break;
+//            case 8:
+//                if(std::string(argv[1]) == "3")
+//                {
+//                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
+//                    server_response = client.create_new_message(token, argv[4], argv[5], argv[6], argv[7]);
+//                }
+//                else
+//                    throw std::logic_error("Invalid arguments");
+//                break;
+//            default:
+//                throw std::logic_error("Invalid arguments");
+//        }
+//
+//        std::cout << server_response.body << " " << server_response.code << std::endl;
+//    }
+//    catch (const std::exception &e)
+//    {
+//        logger->error(e.what());
+//    }
 
-    JSONParser::server_message server_response{};
-    try
+    std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
+        server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
+
+    while(true)
     {
-        switch (argc)
-        {
-            case 4:
-                if(std::string(argv[1]) == "0")
-                {
-                   get_new_messages(token, argv, logger);
-
-                   return;
-                }
-                else if(std::string(argv[1]) == "1")
-                {
-                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
-                    server_response = client.authorization(token);
-                }
-                else
-                    throw std::logic_error("Invalid arguments");
-                break;
-            case 5:
-                if(std::string(argv[1]) == "2")
-                {
-                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
-                    server_response = client.remove_message(token, argv[4]);
-                }
-                else
-                    throw std::logic_error("Invalid arguments");
-                break;
-            case 8:
-                if(std::string(argv[1]) == "3")
-                {
-                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
-                    server_response = client.create_new_message(token, argv[4], argv[5], argv[6], argv[7]);
-                }
-                else
-                    throw std::logic_error("Invalid arguments");
-                break;
-            default:
-                throw std::logic_error("Invalid arguments");
-        }
-
-        std::cout << server_response.body << " " << server_response.code << std::endl;
-    }
-    catch (const std::exception &e)
-    {
-        logger->error(e.what());
+        process_requests();
+        get_new_messages(token, argv, logger, server_name, stoi(server_port));
+        sleep(5);
     }
 }
 
 int main(int argc, char *argv[])
 {
-    if(argc < 4)
-    {
-        throw std::logic_error("Invalid arguments");
-    }
+    std::string db_name = getenv("DATABASE_NAME") ? getenv("DATABASE_NAME") : "noticeboard",
+            db_user = getenv("DATABASE_USER") ? getenv("DATABASE_USER") : "noticeboard",
+            db_password = getenv("DATABASE_PASSWORD") ? getenv("DATABASE_PASSWORD") : "noticeboard",
+            db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "localhost",
+            db_port = getenv("DATABASE_PORT") ? getenv("DATABASE_PORT") : "5432";
 
     std::shared_ptr<spdlog::logger> logger;
     try
@@ -148,7 +176,25 @@ int main(int argc, char *argv[])
     }
     logger->flush_on(spdlog::level::info);
 
-    handle_request(argc, argv, logger);
+    auto db_host_hostent = gethostbyname2(db_host.c_str(), AF_INET);
+    if(db_host_hostent == nullptr)
+    {
+        logger->critical("Cannot connect to database! Unknown host");
+        return 1;
+    }
+    std::string db_host_ip = inet_ntoa(*((struct in_addr*) db_host_hostent->h_addr_list[0]));
+
+    try
+    {
+        database = Database("dbname = " + db_name + " user = " + db_user + " password = " + db_password + " hostaddr = " + db_host_ip + " port = " + db_port, logger);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return 1;
+    }
+
+    handle_requests(argc, argv, logger);
 }
 
 void Client::connect_to_server()

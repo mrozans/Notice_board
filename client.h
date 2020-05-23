@@ -18,6 +18,9 @@
 #include <spdlog/spdlog.h>
 #include "JSONParser.h"
 #include "RequestHandler.h"
+#include "database.h"
+
+Database database;
 
 class Client
 {

@@ -56,7 +56,7 @@ private:
     std::string delete_record_form_intersection_table(const std::string& category_id, const std::string& user_id);
 public:
     Database(std::string connection_string, std::shared_ptr<spdlog::logger> logger) : connection_string(std::move(connection_string)), logger(std::move(logger)){}
-    explicit Database()= default;
+    explicit Database() = default;
 
     std::string select_ip_where_fingerprint(const std::string& fingerprint);
 
@@ -78,7 +78,11 @@ public:
 
     std::string insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage, const std::string& number_of_days);
 
+    std::string insert_local_message(const std::string& id, const std::string& category, const std::string& title, const std::string& content);
+
     std::string delete_message_with_id(const std::string& id, const std::string& fingerprint);
+
+    std::string delete_local_record_with_id(const std::string &table, const std::string& id);
 
     full_message select_message_where_id(const std::string &id);
 

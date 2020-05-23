@@ -20,7 +20,7 @@
 
 int main(int argc, char *argv[])
 {
-    Server s = Server(in6addr_any, 57093);
+    Server s = Server(in6addr_any, 57076);
     s.configure_server();
     s.start_server(40);
     //s.stop();
@@ -112,7 +112,7 @@ void Server::start_server(const int connections)
         args = new thread_args;
         args->database = this->database;
         args->logger = logger;
-        args->timeout = 5;//fixme
+        args->timeout = 5;
         args->new_socket = accept(server_socket, (struct sockaddr *) &server_storage, &address_size);
 
         setsockopt(args->new_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&mode, sizeof(mode));
