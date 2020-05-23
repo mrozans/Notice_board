@@ -39,11 +39,71 @@ JSONParser::server_message Message::remove_message()
     return this->server_message;
 }
 
+bool Message::prepare_stored_message()
+{
+    if(this->client_message.body != "-1")
+    {
+        database.delete_pending_change(this->client_message.body, this->client_message.token);
+    }
+
+    auto client_id = database.select_client_id_where_fingerprint(this->client_message.token);
+
+    if(client_id.empty())
+        return false;
+    else
+    {
+        auto vector_of_change = (database.select_messages_info(client_id, true));
+        if(vector_of_change.empty())
+        {
+            // No request available. Everything is up to date.
+            this->server_message.code = 1;
+            this->server_message.body = "";
+            return true;
+        }
+        else if(vector_of_change[0].state)
+        {
+            // Message deletion request
+            JSONParser::message_transfer_container container = {
+                    vector_of_change[0].message_id,
+                    "",
+                    "",
+                    "",
+                    vector_of_change[0].id
+            };
+            this->server_message.code = 2;
+            this->server_message.body = JSONParser::generate_message_transfer_container(container);
+        }
+        else
+        {
+            // Message creation request
+            auto message = database.select_message_where_id(vector_of_change[0].message_id);
+
+            if(message.category_id.empty())
+                return false;
+
+            JSONParser::message_transfer_container container = {
+                    vector_of_change[0].message_id,
+                    message.category_id,
+                    message.title,
+                    message.content,
+                    vector_of_change[0].id
+            };
+
+            this->server_message.code = 3;
+            this->server_message.body = JSONParser::generate_message_transfer_container(container);
+        }
+    }
+
+    return true;
+}
+
 JSONParser::server_message Message::get_new_messages()
 {
-    //ToDo
-    this->server_message.code = 1;
-    this->server_message.body = "";
+    if(!prepare_stored_message())
+    {
+        this->server_message.code = 0;
+        this->server_message.body = "";
+    }
     return this->server_message;
 }
 

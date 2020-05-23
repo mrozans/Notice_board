@@ -30,6 +30,7 @@ private:
     JSONParser::server_message create_new_message();
     JSONParser::server_message get_new_messages();
     JSONParser::server_message remove_message();
+    bool prepare_stored_message();
 };
 
 #endif //TIN_TABLICA_OGLOSZEN_MESSAGE_H

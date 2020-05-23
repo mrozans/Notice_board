@@ -47,7 +47,7 @@ public:
     JSONParser::server_message send_and_receive(const JSONParser::client_message& message) noexcept(false);
     JSONParser::server_message authorization(const std::string& token) noexcept(false);
     JSONParser::server_message create_new_message(const std::string& token, const std::string& cid, const std::string &title, const std::string &content, const std::string& days) noexcept(false);
-    JSONParser::server_message get_new_messages(const std::string& token) noexcept(false);
+    void get_new_messages(const std::string& token) noexcept(false);
     JSONParser::server_message remove_message(const std::string& token, const std::string& message_id) noexcept(false);
 
 

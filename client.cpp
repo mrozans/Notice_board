@@ -9,27 +9,92 @@
 #include <utility>
 #include "client.h"
 
+void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spdlog::logger> logger) noexcept(false);
+
+void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spdlog::logger> logger) noexcept(false)
+{
+    std::string body = "-1";
+
+    while(true)
+    {
+        auto client = Client(argv[2], std::stoi(argv[3]), 5, logger);
+
+        JSONParser::client_message message;
+        message = {
+                token,
+                3,
+                body
+        };
+
+        auto response = client.send_and_receive(message);
+
+        JSONParser::message_transfer_container message_transfer_container;
+
+        switch(response.code)
+        {
+            case 0:
+                // błąd
+                break;
+            case 1:
+                // stan aktualny
+                try {
+                    std::cout << response.body << " " << response.code << std::endl;
+                    return;
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr<<e.what()<<std::endl;
+                }
+                break;
+            case 2:
+                // wymagane usunięcie wiadomości
+                try {
+                    message_transfer_container = JSONParser::get_message_transfer_container(response.body);
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr<<e.what()<<std::endl;
+                }
+                break;
+            case 3:
+                // wymagane stworzenie wiadomości
+                try {
+                    message_transfer_container = JSONParser::get_message_transfer_container(response.body);
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr<<e.what()<<std::endl;
+                }
+        }
+
+        body = message_transfer_container.rid;
+
+        std::cout << response.body << " " << response.code << std::endl;
+    }
+}
+
 void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logger);
 
 void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logger)
 {
     //create new connection
-    auto token = "a8:9f:67:d3:ee:08:90:3c:5c:7d:a6:4b:23:e5:7f:98:c6:f6:94:bd"; //todo
+    auto token = "c6:1d:99:5a:90:90:4d:be:d8:68:45:05:ba:91:93:32:fb:9b:af:a2"; //todo
 
     JSONParser::server_message server_response{};
     try
     {
-        auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
-
         switch (argc)
         {
             case 4:
                 if(std::string(argv[1]) == "0")
                 {
-                    // database updater mode
+                   get_new_messages(token, argv, logger);
+
+                   return;
                 }
                 else if(std::string(argv[1]) == "1")
                 {
+                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
                     server_response = client.authorization(token);
                 }
                 else
@@ -38,6 +103,7 @@ void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logge
             case 5:
                 if(std::string(argv[1]) == "2")
                 {
+                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
                     server_response = client.remove_message(token, argv[4]);
                 }
                 else
@@ -46,6 +112,7 @@ void handle_request(int argc, char** argv, std::shared_ptr<spdlog::logger> logge
             case 8:
                 if(std::string(argv[1]) == "3")
                 {
+                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
                     server_response = client.create_new_message(token, argv[4], argv[5], argv[6], argv[7]);
                 }
                 else
@@ -197,17 +264,6 @@ JSONParser::server_message Client::create_new_message(const std::string& token, 
             token,
             2,
             container_dump
-    };
-    return send_and_receive(message);
-}
-
-JSONParser::server_message Client::get_new_messages(const std::string& token) noexcept(false)
-{
-    //todo
-    JSONParser::client_message message = {
-            token,
-            3,
-            ""
     };
     return send_and_receive(message);
 }

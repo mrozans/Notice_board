@@ -33,6 +33,7 @@ struct message_info
 {
     std::string id;
     std::string message_id;
+    bool state;
 };
 
 class Database
@@ -82,6 +83,10 @@ public:
     full_message select_message_where_id(const std::string &id);
 
     std::vector<message_info> select_messages_info(const std::string &client_id, bool first);
+
+    std::string delete_pending_change(const std::string& id, const std::string& fingerprint);
+
+    std::string select_client_id_where_fingerprint(const std::string& fingerprint);
 };
 
 #endif

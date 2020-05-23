@@ -231,6 +231,30 @@ std::string Database::select_owner_email_where_message_id(const std::string& mes
     }
 }
 
+std::string Database::select_client_id_where_fingerprint(const std::string& fingerprint)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "SELECT id FROM clients WHERE fingerprint = '" + fingerprint + "';";
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        std::string result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            result = c[0].as<std::string>();
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return "-1";
+    }
+}
+
+
 std::vector<message> Database::select_messages_where_category(const std::string& category_id)
 {
     try
@@ -308,6 +332,7 @@ std::vector<message_info> Database::select_messages_info(const std::string& clie
             message_info m;
             m.id = c[0].as<std::string>();
             m.message_id = c[2].as<std::string>();
+            m.state = c[3].as<bool>();
             result.insert(result.end(), m);
         }
         return result;
@@ -407,5 +432,19 @@ std::string Database::delete_message_with_id(const std::string& id, const std::s
     {
         std::cerr<<e.what()<<std::endl;
         return "";
+    }
+}
+
+std::string Database::delete_pending_change(const std::string& id, const std::string& fingerprint)
+{
+    try
+    {
+        //todo @Marcin Różański - zwróć "-1" jeżeli user_id z pending_changes nie zgadza się z id użytkownika dla fingerprinta
+        return delete_record("pending_changes", id);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return "-1";
     }
 }
