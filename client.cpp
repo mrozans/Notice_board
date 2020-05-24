@@ -11,9 +11,9 @@
 #include "client.h"
 #include "database.h"
 
-void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false);
+void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false);
 
-void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false)
+void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false)
 {
     std::string body = "-1";
 
@@ -83,76 +83,63 @@ void get_new_messages(const std::string& token, char** argv, std::shared_ptr<spd
     }
 }
 
-void process_requests();
+void process_requests(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false);
 
-void process_requests()
+void process_requests(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false)
 {
+    auto request = database.select_local_request();
 
+    while(!request.empty())
+    {
+        auto client = Client(server_name.c_str(), server_port, 5, logger);
+
+        JSONParser::server_message server_response{};
+        try
+        {
+            if(request[1] == "1" && request.size() == 2)
+            {
+                server_response = client.authorization(token);
+            }
+            else if(request[1] == "2" && request.size() == 3)
+            {
+                server_response = client.remove_message(token, request[2]);
+            }
+            else if(request[1] == "3" && request.size() == 6)
+            {
+                // category, title, content, days of validity
+                server_response = client.create_new_message(token, request[2], request[3], request[4], request[5]);
+            }
+            else
+            {
+                database.delete_local_record_with_id("requests", request[0]);
+                throw std::logic_error("Request contained invalid arguments");
+            }
+
+            database.delete_local_record_with_id("requests", request[0]);
+
+            request = database.select_local_request();
+        }
+        catch (const std::exception &e)
+        {
+            logger->error(e.what());
+            return;
+        }
+    }
 }
 
-void handle_requests(int argc, char** argv, std::shared_ptr<spdlog::logger> logger);
+void handle_requests(std::shared_ptr<spdlog::logger> logger);
 
-void handle_requests(int argc, char** argv, std::shared_ptr<spdlog::logger> logger)
+void handle_requests(std::shared_ptr<spdlog::logger> logger)
 {
-//    //create new connection
     auto token = "c6:1d:99:5a:90:90:4d:be:d8:68:45:05:ba:91:93:32:fb:9b:af:a2"; //todo
-//
-//    JSONParser::server_message server_response{};
-//    try
-//    {
-//        switch (argc)
-//        {
-//            case 4:
-//                if(std::string(argv[1]) == "0")
-//                {
-//                   get_new_messages(token, argv, logger);
-//
-//                   return;
-//                }
-//                else if(std::string(argv[1]) == "1")
-//                {
-//                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
-//                    server_response = client.authorization(token);
-//                }
-//                else
-//                    throw std::logic_error("Invalid arguments");
-//                break;
-//            case 5:
-//                if(std::string(argv[1]) == "2")
-//                {
-//                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
-//                    server_response = client.remove_message(token, argv[4]);
-//                }
-//                else
-//                    throw std::logic_error("Invalid arguments");
-//                break;
-//            case 8:
-//                if(std::string(argv[1]) == "3")
-//                {
-//                    auto client = Client(argv[2], std::stoi(argv[3]), 5, std::move(logger));
-//                    server_response = client.create_new_message(token, argv[4], argv[5], argv[6], argv[7]);
-//                }
-//                else
-//                    throw std::logic_error("Invalid arguments");
-//                break;
-//            default:
-//                throw std::logic_error("Invalid arguments");
-//        }
-//
-//        std::cout << server_response.body << " " << server_response.code << std::endl;
-//    }
-//    catch (const std::exception &e)
-//    {
-//        logger->error(e.what());
-//    }
 
     std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
 
     while(true)
     {
-        process_requests();
-        get_new_messages(token, argv, logger, server_name, stoi(server_port));
+        process_requests(token, logger, server_name, stoi(server_port));
+        get_new_messages(token, logger, server_name, stoi(server_port));
         sleep(5);
     }
 }
@@ -194,7 +181,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    handle_requests(argc, argv, logger);
+    handle_requests(logger);
 }
 
 void Client::connect_to_server()
@@ -202,7 +189,9 @@ void Client::connect_to_server()
     if(check_if_ipv6(server_name))
     {
         connect_to_ipv6();
-    }else{
+    }
+    else
+    {
         connect_to_ipv4();
     }
     this->handler = RequestHandler(this->sock,this->logger, this->timeout);

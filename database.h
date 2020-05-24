@@ -64,6 +64,8 @@ public:
 
     std::vector<std::string> select_ip_where_category(const std::string& category_name);
 
+    std::vector<std::string> select_local_request();
+
     std::string select_user_where_fingerprint(const std::string& fingerprint);
 
     std::string select_owner_email_where_message_id(const std::string& message_id);

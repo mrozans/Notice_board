@@ -185,6 +185,35 @@ std::vector<std::string> Database::select_ip_where_category(const std::string& c
     }
 }
 
+std::vector<std::string> Database::select_local_request()
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "SELECT * FROM requests LIMIT 1";
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        std::vector<std::string> result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            for(auto i = 0; i < 6; i++)
+            {
+                if(!c[i].is_null())
+                {
+                    result.insert(result.end(), c[i].as<std::string>());
+                }
+            }
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return std::vector<std::string>();
+    }
+}
+
 std::string Database::select_user_where_fingerprint(const std::string& fingerprint)
 {
     try
@@ -343,7 +372,6 @@ std::vector<message_info> Database::select_messages_info(const std::string& clie
         std::vector<message_info> result;
         return result;
     }
-
 }
 
 std::vector<name_id> Database::select_category_where_owner(const std::string& user_id)
