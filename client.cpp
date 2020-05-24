@@ -18,8 +18,7 @@ void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> 
 
     while(true)
     {
-        auto client = Client(server_name.c_str(), server_port, 5, logger);
-
+        JSONParser::server_message response;
         JSONParser::client_message message;
         message = {
                 token,
@@ -27,7 +26,16 @@ void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> 
                 body
         };
 
-        auto response = client.send_and_receive(message);
+        try{
+            auto client = Client(server_name.c_str(), server_port, 5, logger);
+            response = client.send_and_receive(message);
+        } catch (const std::exception &e) {
+            logger->critical(e.what());
+            response={
+                    0,
+                    e.what()
+            };
+        }
 
         JSONParser::message_transfer_container message_transfer_container;
 
@@ -135,7 +143,7 @@ void handle_requests(std::shared_ptr<spdlog::logger> logger)
 {
     auto token = "30:a2:eb:ef:51:00:9d:72:60:63:79:6a:26:02:ab:f7:2b:6f:e8:36"; //todo
 
-    std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
+    std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "54.146.75.52",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
 
     while(true)
