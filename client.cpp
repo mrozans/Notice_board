@@ -7,7 +7,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <thread>
 #include "client.h"
 #include "database.h"
 
@@ -134,25 +133,25 @@ void handle_requests(std::shared_ptr<spdlog::logger> logger);
 
 void handle_requests(std::shared_ptr<spdlog::logger> logger)
 {
-    auto token = "1d:c4:09:d3:55:7a:b4:be:00:97:ab:fe:36:eb:9c:f1:3c:09:31:a3"; //todo
+    auto token = "30:a2:eb:ef:51:00:9d:72:60:63:79:6a:26:02:ab:f7:2b:6f:e8:36"; //todo
 
     std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
 
     while(true)
     {
-        std::thread(process_requests, token, logger, server_name, stoi(server_port)).detach();
-        std::thread(get_new_messages, token, logger, server_name, stoi(server_port)).detach();
+        process_requests(token, logger, server_name, stoi(server_port));
+        get_new_messages(token, logger, server_name, stoi(server_port));
         sleep(5);
     }
 }
 
 int main(int argc, char *argv[])
 {
-    std::string db_name = getenv("DATABASE_NAME") ? getenv("DATABASE_NAME") : "noticeboard",
-            db_user = getenv("DATABASE_USER") ? getenv("DATABASE_USER") : "noticeboard",
-            db_password = getenv("DATABASE_PASSWORD") ? getenv("DATABASE_PASSWORD") : "noticeboard",
-            db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "localhost",
+    std::string db_name = getenv("DATABASE_NAME") ? getenv("DATABASE_NAME") : "postgres",
+            db_user = getenv("DATABASE_USER") ? getenv("DATABASE_USER") : "postgres",
+            db_password = getenv("DATABASE_PASSWORD") ? getenv("DATABASE_PASSWORD") : "docker",
+            db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "0.0.0.0",
             db_port = getenv("DATABASE_PORT") ? getenv("DATABASE_PORT") : "5432";
 
     std::shared_ptr<spdlog::logger> logger;
