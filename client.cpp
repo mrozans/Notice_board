@@ -6,8 +6,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <utility>
 #include <arpa/inet.h>
+#include <thread>
 #include "client.h"
 #include "database.h"
 
@@ -138,8 +138,8 @@ void handle_requests(std::shared_ptr<spdlog::logger> logger)
 
     while(true)
     {
-        process_requests(token, logger, server_name, stoi(server_port));
-        get_new_messages(token, logger, server_name, stoi(server_port));
+        std::thread(process_requests, token, logger, server_name, stoi(server_port)).detach();
+        std::thread(get_new_messages, token, logger, server_name, stoi(server_port)).detach();
         sleep(5);
     }
 }
