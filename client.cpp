@@ -170,10 +170,15 @@ void handle_requests(std::shared_ptr<spdlog::logger> logger)
 
     while(true)
     {
-        get_new_content(token, logger, server_name, stoi(server_port), "categories");
-        process_requests(token, logger, server_name, stoi(server_port));
-        get_new_content(token, logger, server_name, stoi(server_port), "messages");
-        sleep(5);
+        std::thread t1(get_new_content, token, logger, server_name, stoi(server_port), "categories");
+        std::thread t2(process_requests, token, logger, server_name, stoi(server_port));
+        std::thread t3(get_new_content, token, logger, server_name, stoi(server_port), "messages");
+
+        t1.join();
+        t2.join();
+        t3.join();
+
+        sleep(2);
     }
 }
 
