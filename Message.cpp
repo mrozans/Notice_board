@@ -39,28 +39,86 @@ JSONParser::server_message Message::remove_message()
     return this->server_message;
 }
 
+bool Message::prepare_stored_message()
+{
+    if(this->client_message.body != "-1")
+    {
+        database.delete_pending_change(this->client_message.body, this->client_message.token);
+    }
+
+    auto client_id = database.select_client_id_where_fingerprint(this->client_message.token);
+
+    if(client_id.empty())
+        return false;
+    else
+    {
+        auto vector_of_change = (database.select_messages_info(client_id, true));
+        if(vector_of_change.empty())
+        {
+            // No request available. Everything is up to date.
+            this->server_message.code = 1;
+            this->server_message.body = "";
+            return true;
+        }
+        else if(vector_of_change[0].state)
+        {
+            // Message deletion request
+            JSONParser::message_transfer_container container = {
+                    vector_of_change[0].message_id,
+                    "",
+                    "",
+                    "",
+                    vector_of_change[0].id
+            };
+            this->server_message.code = 2;
+            this->server_message.body = JSONParser::generate_message_transfer_container(container);
+        }
+        else
+        {
+            // Message creation request
+            auto message = database.select_message_where_id(vector_of_change[0].message_id);
+
+            if(message.category_id.empty())
+                return false;
+
+            auto category_name = database.select_category_where_id(message.category_id);
+
+            JSONParser::message_transfer_container container = {
+                    vector_of_change[0].message_id,
+                    category_name,
+                    message.title,
+                    message.content,
+                    vector_of_change[0].id
+            };
+
+            this->server_message.code = 3;
+            this->server_message.body = JSONParser::generate_message_transfer_container(container);
+        }
+    }
+
+    return true;
+}
+
 JSONParser::server_message Message::get_new_messages()
 {
-    //ToDo
-    this->server_message.code = 1;
-    this->server_message.body = "";
+    if(!prepare_stored_message())
+    {
+        this->server_message.code = 0;
+        this->server_message.body = "";
+    }
     return this->server_message;
 }
 
 JSONParser::server_message Message::create_new_message()
 {
-    struct msg {
-        std::string cid;
-        std::string title;
-        std::string content;
-    };
-    msg msg_json;
+    JSONParser::message_container message_container;
     try {
         nlohmann::json j = nlohmann::json::parse(client_message.body);
-        msg_json = msg {
-                j["cid"].get<std::string>(),
+        message_container = JSONParser::message_container {
+                j["category"].get<std::string>(),
                 j["title"].get<std::string>(),
-                j["content"].get<std::string>()
+                j["content"].get<std::string>(),
+                j["days"].get<std::string>()
         };
     } catch (const std::exception& e) {
         this->server_message.code = 0;
@@ -68,14 +126,23 @@ JSONParser::server_message Message::create_new_message()
         return this->server_message;
     }
 
-    this->server_message.code = 1;
-    this->server_message.body = database.insert_into_messages(msg_json.cid, msg_json.title, msg_json.content);
+    auto category_id = database.select_category_by_name(message_container.category);
+
+    if(category_id.empty())
+    {
+        this->server_message.code = 1;
+        this->server_message.body = "0";
+        return this->server_message;
+    }
+
+    database.insert_into_messages(category_id, message_container.title, message_container.content, message_container.days);
+    this->server_message.body = "1";
     return this->server_message;
 }
 
 JSONParser::server_message Message::client_authorization()
 {
     this->server_message.code = 1;
-    this->server_message.body = database.select_user_where_fingerprint(this->client_message.token);
+    this->server_message.body = database.update_hostname_where_fingerprint(this->client_message.token, this->client_message.body);
     return this->server_message;
 }

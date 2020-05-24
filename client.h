@@ -18,6 +18,9 @@
 #include <spdlog/spdlog.h>
 #include "JSONParser.h"
 #include "RequestHandler.h"
+#include "database.h"
+
+Database database;
 
 class Client
 {
@@ -46,8 +49,7 @@ public:
 
     JSONParser::server_message send_and_receive(const JSONParser::client_message& message) noexcept(false);
     JSONParser::server_message authorization(const std::string& token) noexcept(false);
-    JSONParser::server_message create_new_message(const std::string& token) noexcept(false);
-    JSONParser::server_message get_new_messages(const std::string& token) noexcept(false);
+    JSONParser::server_message create_new_message(const std::string& token, const std::string& category, const std::string &title, const std::string &content, const std::string& days) noexcept(false);
     JSONParser::server_message remove_message(const std::string& token, const std::string& message_id) noexcept(false);
 
 
@@ -60,7 +62,7 @@ protected:
 private:
 
     static bool check_if_ipv6(const char *ip);
-    void connect_to_ipv4() noexcept(false);;
-    void connect_to_ipv6() noexcept(false);;
+    void connect_to_ipv4() noexcept(false);
+    void connect_to_ipv6() noexcept(false);
     void connect_to_server() noexcept(false);
 };
