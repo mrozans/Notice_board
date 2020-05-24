@@ -284,10 +284,10 @@ JSONParser::server_message Client::authorization(const std::string& token) noexc
     return send_and_receive(message);
 }
 
-JSONParser::server_message Client::create_new_message(const std::string& token, const std::string& cid, const std::string &title, const std::string &content, const std::string &days) noexcept(false)
+JSONParser::server_message Client::create_new_message(const std::string& token, const std::string& category, const std::string &title, const std::string &content, const std::string &days) noexcept(false)
 {
     JSONParser::message_container container = {
-            cid,
+            category,
             title,
             content,
             days

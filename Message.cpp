@@ -81,9 +81,11 @@ bool Message::prepare_stored_message()
             if(message.category_id.empty())
                 return false;
 
+            auto category_name = database.select_category_where_id(message.category_id);
+
             JSONParser::message_transfer_container container = {
                     vector_of_change[0].message_id,
-                    message.category_id,
+                    category_name,
                     message.title,
                     message.content,
                     vector_of_change[0].id
@@ -113,7 +115,7 @@ JSONParser::server_message Message::create_new_message()
     try {
         nlohmann::json j = nlohmann::json::parse(client_message.body);
         message_container = JSONParser::message_container {
-                j["cid"].get<std::string>(),
+                j["category"].get<std::string>(),
                 j["title"].get<std::string>(),
                 j["content"].get<std::string>(),
                 j["days"].get<std::string>()
@@ -124,8 +126,17 @@ JSONParser::server_message Message::create_new_message()
         return this->server_message;
     }
 
-    this->server_message.code = 1;
-    this->server_message.body = database.insert_into_messages(message_container.cid, message_container.title, message_container.content, message_container.days);
+    auto category_id = database.select_category_by_name(message_container.category);
+
+    if(category_id.empty())
+    {
+        this->server_message.code = 1;
+        this->server_message.body = "0";
+        return this->server_message;
+    }
+
+    database.insert_into_messages(category_id, message_container.title, message_container.content, message_container.days);
+    this->server_message.body = "1";
     return this->server_message;
 }
 

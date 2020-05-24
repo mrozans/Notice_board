@@ -10,7 +10,7 @@ using json = nlohmann::json;
 std::string JSONParser::generate_message_container(JSONParser::message_container container)
 {
     json j;
-    j["cid"] = container.cid;
+    j["category"] = container.category;
     j["title"] = container.title;
     j["content"] = container.content;
     j["days"] = container.days;

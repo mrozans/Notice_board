@@ -19,7 +19,7 @@ public:
         std::string body;
     };
     struct message_container{
-        std::string cid;
+        std::string category;
         std::string title;
         std::string content;
         std::string days;

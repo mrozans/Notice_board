@@ -374,16 +374,24 @@ std::vector<message_info> Database::select_messages_info(const std::string& clie
     }
 }
 
-std::vector<name_id> Database::select_category_where_owner(const std::string& user_id)
+std::string Database::select_category_where_id(const std::string& id)
 {
-    pqxx::result R = select_with_specified_attribute("categories", "owner_id", user_id, false);
-    std::vector<name_id> result;
+    pqxx::result R = select_with_specified_attribute("categories", "id", id, false);
+    std::string result;
     for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
     {
-        name_id n;
-        n.name = c[1].as<std::string>();
-        n.id = c[0].as<std::string>();
-        result.insert(result.end(), n);
+        result = c[1].as<std::string>();
+    }
+    return result;
+}
+
+std::string Database::select_category_by_name(const std::string& id)
+{
+    pqxx::result R = select_with_specified_attribute("categories", "name", "'" + id + "'", false);
+    std::string result;
+    for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+    {
+        result = c[0].as<std::string>();
     }
     return result;
 }
@@ -421,7 +429,7 @@ std::string Database::update_ip_where_fingerprint(const std::string& fingerprint
 
 std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& message, const std::string& number_of_days)
 {
-    //todo validate number of days - if it is valid
+    //todo validate number of days - if it is valid, uprawnienia do wysyłania wiadomości
 
 //    std::vector<name_id> n = select_user_categories(user_id);
 //    bool belong = false;

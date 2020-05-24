@@ -72,7 +72,9 @@ public:
 
     std::vector<message> select_messages_where_category(const std::string& category_id);
 
-    std::vector<name_id> select_category_where_owner(const std::string& user_id);
+    std::string select_category_where_id(const std::string& id);
+
+    std::string select_category_by_name(const std::string& id);
 
     std::vector<name_id> select_user_categories(const std::string& user_id);
 
