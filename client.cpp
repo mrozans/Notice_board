@@ -66,9 +66,12 @@ void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> 
                 try
                 {
                     message_transfer_container = JSONParser::get_message_transfer_container(response.body);
-                    if(database.insert_local_message(message_transfer_container.id, message_transfer_container.category,
-                                                     message_transfer_container.title, message_transfer_container.content) == "-1")
-                        throw std::logic_error("Message processing error! Message can't be inserted.");
+                    if(database.select_message_where_id(message_transfer_container.id).category_id.empty())
+                    {
+                        if(database.insert_local_message(message_transfer_container.id, message_transfer_container.category,
+                                                         message_transfer_container.title, message_transfer_container.content) == "-1")
+                            throw std::logic_error("Message processing error! Message can't be inserted.");
+                    }
                 }
                 catch (const std::exception &e)
                 {
