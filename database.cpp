@@ -374,6 +374,34 @@ std::vector<message_info> Database::select_messages_info(const std::string& clie
     }
 }
 
+std::vector<message_info> Database::select_categories_info(const std::string& client_id)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        std::string sql = "SELECT * FROM pending_categories WHERE client_id = '" + client_id + "' LIMIT 1";
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        std::vector<message_info> result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            message_info m;
+            m.id = c[0].as<std::string>();
+            m.message_id = c[2].as<std::string>();
+            m.state = c[3].as<int>();
+            result.insert(result.end(), m);
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        std::vector<message_info> result;
+        return result;
+    }
+}
+
 std::string Database::select_category_where_id(const std::string& id)
 {
     pqxx::result R = select_with_specified_attribute("categories", "id", id, false);
@@ -470,6 +498,17 @@ std::string Database::insert_local_message(const std::string& id, const std::str
     return insert("messages", attributes, values);
 }
 
+std::string Database::insert_local_category(const std::string& id, const std::string& name)
+{
+    std::vector<std::string> attributes;
+    std::vector<std::pair <std::string, bool>> values;
+    attributes.insert(attributes.begin(), "name");
+    attributes.insert(attributes.begin(), "id");
+    values.insert(values.begin(), std::make_pair(name, true));
+    values.insert(values.begin(), std::make_pair(id, true));
+    return insert("categories", attributes, values);
+}
+
 std::string Database::delete_message_with_id(const std::string& id, const std::string& fingerprint)
 {
     try
@@ -504,6 +543,19 @@ std::string Database::delete_pending_change(const std::string& id, const std::st
     {
         //todo @Marcin Różański - zwróć "-1" jeżeli user_id z pending_changes nie zgadza się z id użytkownika dla fingerprinta
         return delete_record("pending_changes", id);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return "-1";
+    }
+}
+
+std::string Database::delete_pending_category(const std::string& id, const std::string& fingerprint)
+{
+    try
+    {
+        return delete_record("pending_categories", id);
     }
     catch (const std::exception &e)
     {

@@ -10,9 +10,9 @@
 #include "client.h"
 #include "database.h"
 
-void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false);
+void get_new_content(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port, std::string content_type) noexcept(false);
 
-void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port) noexcept(false)
+void get_new_content(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port, std::string content_type) noexcept(false)
 {
     std::string body = "-1";
 
@@ -20,11 +20,22 @@ void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> 
     {
         JSONParser::server_message response;
         JSONParser::client_message message;
-        message = {
-                token,
-                3,
-                body
-        };
+        if(content_type == "messages")
+        {
+            message = {
+                    token,
+                    3,
+                    body
+            };
+        }
+        else
+        {
+            message = {
+                    token,
+                    5,
+                    body
+            };
+        }
 
         try{
             auto client = Client(server_name.c_str(), server_port, 5, logger);
@@ -60,12 +71,12 @@ void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> 
                 {
                     message_transfer_container = JSONParser::get_message_transfer_container(response.body);
 
-                    if(database.delete_local_record_with_id("messages", message_transfer_container.id) == "-1")
-                        throw std::logic_error("Message processing error! Message can't be deleted.");
+                    if(database.delete_local_record_with_id(content_type, message_transfer_container.id) == "-1")
+                        throw std::logic_error("Data processing error! Data can't be deleted.");
                 }
                 catch (const std::exception &e)
                 {
-                    logger->error("Message processing error! Message can't be deleted.");
+                    logger->error("Data processing error! Data can't be deleted.");
                     return;
                 }
                 break;
@@ -73,11 +84,22 @@ void get_new_messages(const std::string& token, std::shared_ptr<spdlog::logger> 
                 try
                 {
                     message_transfer_container = JSONParser::get_message_transfer_container(response.body);
-                    if(database.select_message_where_id(message_transfer_container.id).category_id.empty())
+                    if(content_type == "messages")
                     {
-                        if(database.insert_local_message(message_transfer_container.id, message_transfer_container.category,
-                                                         message_transfer_container.title, message_transfer_container.content) == "-1")
-                            throw std::logic_error("Message processing error! Message can't be inserted.");
+                        if(database.select_message_where_id(message_transfer_container.id).category_id.empty())
+                        {
+                            if(database.insert_local_message(message_transfer_container.id, message_transfer_container.category,
+                                                             message_transfer_container.title, message_transfer_container.content) == "-1")
+                                throw std::logic_error("Message processing error! Message can't be inserted.");
+                        }
+                    }
+                    else
+                    {
+                        if(database.select_category_where_id(message_transfer_container.id).empty())
+                        {
+                            if(database.insert_local_category(message_transfer_container.id, message_transfer_container.category) == "-1")
+                                throw std::logic_error("Category processing error! Category can't be inserted.");
+                        }
                     }
                 }
                 catch (const std::exception &e)
@@ -141,15 +163,16 @@ void handle_requests(std::shared_ptr<spdlog::logger> logger);
 
 void handle_requests(std::shared_ptr<spdlog::logger> logger)
 {
-    auto token = "9b:59:26:60:fa:dc:4d:1f:e4:8e:c2:94:1e:72:28:ad:fa:98:18:44"; //todo
+    auto token = "45:63:f1:fc:a7:6f:33:55:62:e0:10:60:b4:c6:f9:1a:5f:cc:e5:0d"; //todo
 
     std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
 
     while(true)
     {
+        get_new_content(token, logger, server_name, stoi(server_port), "categories");
         process_requests(token, logger, server_name, stoi(server_port));
-        get_new_messages(token, logger, server_name, stoi(server_port));
+        get_new_content(token, logger, server_name, stoi(server_port), "messages");
         sleep(5);
     }
 }
