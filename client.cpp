@@ -141,9 +141,9 @@ void handle_requests(std::shared_ptr<spdlog::logger> logger);
 
 void handle_requests(std::shared_ptr<spdlog::logger> logger)
 {
-    auto token = "30:a2:eb:ef:51:00:9d:72:60:63:79:6a:26:02:ab:f7:2b:6f:e8:36"; //todo
+    auto token = "9b:59:26:60:fa:dc:4d:1f:e4:8e:c2:94:1e:72:28:ad:fa:98:18:44"; //todo
 
-    std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "54.146.75.52",
+    std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
 
     while(true)

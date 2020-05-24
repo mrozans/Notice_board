@@ -361,7 +361,7 @@ std::vector<message_info> Database::select_messages_info(const std::string& clie
             message_info m;
             m.id = c[0].as<std::string>();
             m.message_id = c[2].as<std::string>();
-            m.state = c[3].as<bool>();
+            m.state = c[3].as<int>();
             result.insert(result.end(), m);
         }
         return result;

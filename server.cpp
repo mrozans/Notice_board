@@ -149,6 +149,7 @@ void *Server::handle_message(void *voidArgs)
 
     /*return message*/
     auto server_message = Message(clientMessage, args->database).run();
+
     try{
         handler.send_message(server_message);
         args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
