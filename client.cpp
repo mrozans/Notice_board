@@ -134,7 +134,7 @@ void handle_requests(std::shared_ptr<spdlog::logger> logger);
 
 void handle_requests(std::shared_ptr<spdlog::logger> logger)
 {
-    auto token = "c6:1d:99:5a:90:90:4d:be:d8:68:45:05:ba:91:93:32:fb:9b:af:a2"; //todo
+    auto token = "1d:c4:09:d3:55:7a:b4:be:00:97:ab:fe:36:eb:9c:f1:3c:09:31:a3"; //todo
 
     std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
@@ -279,10 +279,13 @@ JSONParser::server_message Client::send_and_receive(const JSONParser::client_mes
 
 JSONParser::server_message Client::authorization(const std::string& token) noexcept(false)
 {
+    char hostname[256];
+    gethostname(hostname, 256);
+
     JSONParser::client_message message = {
             token,
             1,
-            ""
+            std::string(hostname)
     };
     return send_and_receive(message);
 }

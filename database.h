@@ -78,7 +78,7 @@ public:
 
     std::vector<name_id> select_user_categories(const std::string& user_id);
 
-    std::string update_ip_where_fingerprint(const std::string& fingerprint, const std::string& ip);
+    std::string update_hostname_where_fingerprint(const std::string& fingerprint, const std::string& hostname);
 
     std::string insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage, const std::string& number_of_days);
 

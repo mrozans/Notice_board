@@ -143,6 +143,6 @@ JSONParser::server_message Message::create_new_message()
 JSONParser::server_message Message::client_authorization()
 {
     this->server_message.code = 1;
-    this->server_message.body = database.select_user_where_fingerprint(this->client_message.token);
+    this->server_message.body = database.update_hostname_where_fingerprint(this->client_message.token, this->client_message.body);
     return this->server_message;
 }
