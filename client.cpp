@@ -159,12 +159,10 @@ void process_requests(const std::string& token, std::shared_ptr<spdlog::logger> 
     }
 }
 
-void handle_requests(std::shared_ptr<spdlog::logger> logger);
+void handle_requests(const std::string& token, std::shared_ptr<spdlog::logger> logger);
 
-void handle_requests(std::shared_ptr<spdlog::logger> logger)
+void handle_requests(const std::string& token, std::shared_ptr<spdlog::logger> logger)
 {
-    auto token = "45:63:f1:fc:a7:6f:33:55:62:e0:10:60:b4:c6:f9:1a:5f:cc:e5:0d"; //todo
-
     std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
 
@@ -173,12 +171,18 @@ void handle_requests(std::shared_ptr<spdlog::logger> logger)
         get_new_content(token, logger, server_name, stoi(server_port), "categories");
         process_requests(token, logger, server_name, stoi(server_port));
         get_new_content(token, logger, server_name, stoi(server_port), "messages");
-        sleep(5);
+        sleep(2);
     }
 }
 
 int main(int argc, char *argv[])
 {
+    if(!getenv("CLIENT_TOKEN"))
+    {
+        std::cerr << "CLIENT_TOKEN environment variable is not set!" << std::endl;
+        exit(1);
+    }
+
     std::string db_name = getenv("DATABASE_NAME") ? getenv("DATABASE_NAME") : "postgres",
             db_user = getenv("DATABASE_USER") ? getenv("DATABASE_USER") : "postgres",
             db_password = getenv("DATABASE_PASSWORD") ? getenv("DATABASE_PASSWORD") : "docker",
@@ -214,7 +218,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    handle_requests(logger);
+    handle_requests(std::string(getenv("CLIENT_TOKEN")), logger);
 }
 
 void Client::connect_to_server()

@@ -20,7 +20,7 @@
 
 int main(int argc, char *argv[])
 {
-    Server s = Server(in6addr_any, 57076);
+    Server s = Server(in6addr_any, getenv("SERVER_PORT") ? std::stoi(getenv("SERVER_PORT")) : 57076);
     s.configure_server();
     s.start_server(40);
     //s.stop();
