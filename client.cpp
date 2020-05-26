@@ -38,12 +38,16 @@ void get_new_content(const std::string& token, std::shared_ptr<spdlog::logger> l
             };
         }
 
-        try{
+        try
+        {
             auto client = Client(server_name.c_str(), server_port, 5, logger);
             response = client.send_and_receive(message);
-        } catch (const std::exception &e) {
+        }
+        catch (const std::exception &e)
+        {
             logger->critical(e.what());
-            response={
+            std::cerr << e.what() << std::endl;
+            response = {
                     0,
                     e.what()
             };
@@ -155,6 +159,7 @@ void process_requests(const std::string& token, std::shared_ptr<spdlog::logger> 
         catch (const std::exception &e)
         {
             logger->error(e.what());
+            std::cerr << e.what() << std::endl;
             return;
         }
     }
@@ -166,6 +171,10 @@ void handle_requests(const std::string& token, std::shared_ptr<spdlog::logger> l
 {
     std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
+
+    auto client = Client(server_name.c_str(), stoi(server_port), 5, logger);
+
+    client.authorization(token);
 
     while(true)
     {
