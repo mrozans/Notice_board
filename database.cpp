@@ -335,7 +335,7 @@ std::string Database::update_hostname_where_fingerprint(const std::string& finge
     return update("clients", "hostname", "fingerprint", fingerprint, hostname);
 }
 
-std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& message, const int& number_of_days)
+std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& message, const std::string& number_of_days)
 {
     std::vector<std::string> attributes;
     std::vector<std::pair <std::string, bool>> values;

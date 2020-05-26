@@ -204,18 +204,9 @@ JSONParser::server_message Message::create_new_message()
         return this->server_message;
     }
 
-    try
-    {
-        database.insert_into_messages(category_id, message_container.title, message_container.content, std::stoi(message_container.days));
-        this->server_message.body = "1";
-        return this->server_message;
-    }
-    catch (const std::exception& e)
-    {
-        this->server_message.code = 1;
-        this->server_message.body = e.what();
-        return this->server_message;
-    }
+    database.insert_into_messages(category_id, message_container.title, message_container.content, message_container.days);
+    this->server_message.body = "1";
+    return this->server_message;
 }
 
 JSONParser::server_message Message::client_authorization()

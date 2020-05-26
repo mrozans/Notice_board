@@ -49,7 +49,7 @@ public:
     std::string select_category_where_id(const std::string& id);
     std::string select_category_by_name(const std::string& id);
     std::string update_hostname_where_fingerprint(const std::string& fingerprint, const std::string& hostname);
-    std::string insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage, const int& number_of_days);
+    std::string insert_into_messages(const std::string& category_id, const std::string& title, const std::string& massage, const std::string& number_of_days);
     std::string insert_local_message(const std::string& id, const std::string& category, const std::string& title, const std::string& content);
     std::string insert_local_category(const std::string& id, const std::string& name);
     std::string delete_message_with_id(const std::string& id, const std::string& fingerprint);
