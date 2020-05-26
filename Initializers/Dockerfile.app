@@ -1,4 +1,6 @@
 # Autorzy: Tomasz Jóżwik, Marcin Różański
+# Data: 25.05.2020
+# Tytuł projektu: Tablica ogłoszeń
 
 FROM ubuntu:18.04
 ARG DEBIAN_FRONTEND=noninteractive

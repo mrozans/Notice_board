@@ -1,3 +1,7 @@
+# Autorzy: Tomasz Jóżwik, Marcin Różański
+# Data: 25.05.2020
+# Tytuł projektu: Tablica ogłoszeń
+
 FROM postgres
 
 COPY ./Initializers/psql_dump.sql /docker-entrypoint-initdb.d/

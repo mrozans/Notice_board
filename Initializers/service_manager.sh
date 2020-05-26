@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Autorzy: Tomasz Jóźwik, Marcin Różański
+# Data: 20.05.2020
+# Tytuł projektu: Tablica ogłoszeń
 
 if [ "$MODE" == "server" ]
 then

@@ -1,6 +1,7 @@
 /**
  * @authors Tomasz Jóźwik, Marcin Różański
- *
+ * @date 05.05.2020
+ * @name Tablica ogłoszeń
  */
 
 #include "database.h"

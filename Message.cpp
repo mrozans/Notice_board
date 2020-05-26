@@ -1,6 +1,7 @@
 /**
  * @authors Tomasz Mazur, Marcin Mozolewski
- *
+ * @date 20.05.2020
+ * @name Tablica ogłoszeń
  */
 #include "Message.h"
 

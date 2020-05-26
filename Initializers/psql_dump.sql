@@ -1,4 +1,6 @@
 -- Autorzy: Tomasz Jóźwik, Marcin Różański
+-- Data: 25.05.2020
+-- Tytuł projektu: Tablica ogłoszeń
 
 CREATE TABLE messages (
     id bigint PRIMARY KEY ,

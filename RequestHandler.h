@@ -1,6 +1,7 @@
 /**
  * @authors Tomasz Mazur, Marcin Mozolewski
- *
+ * @date 29.04.2020
+ * @name Tablica ogłoszeń
  */
 #ifndef TIN_TABLICA_OGLOSZEN_REQUESTHANDLER_H
 #define TIN_TABLICA_OGLOSZEN_REQUESTHANDLER_H

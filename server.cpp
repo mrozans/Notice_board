@@ -1,6 +1,7 @@
 /**
  * @authors Tomasz Mazur, Marcin Mozolewski
- *
+ * @date 04.05.2020
+ * @name Tablica ogłoszeń
  */
 
 #include <sys/types.h>
