@@ -115,6 +115,14 @@ std::string Database::select_public_key_where_fingerprint(const std::string& fin
     return result;
 }
 
+std::string Database::select_client_id_where_change_id(const std::string& table, const std::string& change_id)
+{
+    pqxx::result R = select_with_specified_attribute(table, "id", change_id, true);
+    pqxx::result::const_iterator c = R.begin();
+    std::string result = c[1].as<std::string>();
+    return result;
+}
+
 std::vector<std::string> Database::select_local_request()
 {
     try
@@ -416,7 +424,9 @@ std::string Database::delete_pending_change(const std::string& id, const std::st
 {
     try
     {
-        //todo @Marcin Różański - zwróć "-1" jeżeli user_id z pending_changes nie zgadza się z id użytkownika dla fingerprinta
+        if(select_client_id_where_fingerprint(fingerprint) != select_client_id_where_change_id("pending_changes", id))
+            return "-1";
+
         return delete_record("pending_changes", id);
     }
     catch (const std::exception &e)
@@ -430,6 +440,9 @@ std::string Database::delete_pending_category(const std::string& id, const std::
 {
     try
     {
+        if(select_client_id_where_fingerprint(fingerprint) != select_client_id_where_change_id("pending_categories", id))
+            return "-1";
+
         return delete_record("pending_categories", id);
     }
     catch (const std::exception &e)
