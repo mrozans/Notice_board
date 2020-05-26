@@ -212,6 +212,7 @@ int main(int argc, char *argv[])
     try
     {
         database = Database("dbname = " + db_name + " user = " + db_user + " password = " + db_password + " hostaddr = " + db_host_ip + " port = " + db_port, logger);
+        database.test_connection();
     }
     catch (const std::exception &e)
     {

@@ -213,7 +213,7 @@ std::string Database::select_client_id_where_fingerprint(const std::string& fing
     }
 }
 
-full_message Database::select_message_where_id(const std::string& id)
+message Database::select_message_where_id(const std::string& id)
 {
     try
     {
@@ -222,7 +222,7 @@ full_message Database::select_message_where_id(const std::string& id)
         pqxx::nontransaction N(C);
         pqxx::result R(N.exec(sql));
         C.disconnect();
-        full_message result;
+        message result;
         result.title = "";
         result.content = "";
         result.category_id = "";
@@ -237,7 +237,7 @@ full_message Database::select_message_where_id(const std::string& id)
     catch (const std::exception &e)
     {
         std::cerr<<e.what()<<std::endl;
-        full_message result;
+        message result;
         result.title = "";
         result.content = "";
         result.category_id = "";
@@ -436,5 +436,20 @@ std::string Database::delete_pending_category(const std::string& id, const std::
     {
         std::cerr<<e.what()<<std::endl;
         return "-1";
+    }
+}
+
+void Database::test_connection()
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(""));
+        C.disconnect();
+    }
+    catch(const std::exception &e)
+    {
+        throw std::logic_error("Database connection failed!");
     }
 }

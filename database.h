@@ -15,12 +15,6 @@ struct message
 {
     std::string title;
     std::string content;
-};
-
-struct full_message
-{
-    std::string title;
-    std::string content;
     std::string category_id;
 };
 
@@ -57,12 +51,13 @@ public:
     std::string insert_local_category(const std::string& id, const std::string& name);
     std::string delete_message_with_id(const std::string& id, const std::string& fingerprint);
     std::string delete_local_record_with_id(const std::string &table, const std::string& id);
-    full_message select_message_where_id(const std::string &id);
+    message select_message_where_id(const std::string &id);
     std::vector<message_info> select_messages_info(const std::string &client_id, bool first);
     std::vector<message_info> select_categories_info(const std::string& client_id);
     std::string delete_pending_change(const std::string& id, const std::string& fingerprint);
     std::string delete_pending_category(const std::string& id, const std::string& fingerprint);
     std::string select_client_id_where_fingerprint(const std::string& fingerprint);
+    void test_connection();
 };
 
 #endif
