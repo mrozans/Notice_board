@@ -23,7 +23,7 @@ public:
         std::string category;
         std::string title;
         std::string content;
-        std::string days;
+        std::basic_string<char> days;
     };
     struct message_transfer_container{
         std::string id;

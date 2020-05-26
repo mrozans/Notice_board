@@ -347,7 +347,7 @@ std::string Database::insert_into_messages(const std::string& category_id, const
     attributes.insert(attributes.begin(), "category_id");
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP", false));
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP", false));
-    values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP + INTERVAL '" + std::to_string(number_of_days) + " day'", false));
+    values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP + INTERVAL '" + number_of_days + " day'", false));
     values.insert(values.begin(), std::make_pair(message, true));
     values.insert(values.begin(), std::make_pair(title, true));
     values.insert(values.begin(), std::make_pair(category_id, false));
