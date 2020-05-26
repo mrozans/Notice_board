@@ -42,7 +42,7 @@ Server::Server(in6_addr addr, uint16_t port_number): addr(addr), port(port_numbe
     std::string db_name = getenv("DATABASE_NAME") ? getenv("DATABASE_NAME") : "noticeboard",
             db_user = getenv("DATABASE_USER") ? getenv("DATABASE_USER") : "noticeboard",
             db_password = getenv("DATABASE_PASSWORD") ? getenv("DATABASE_PASSWORD") : "noticeboard",
-            db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "localhost",
+            db_host = getenv("DATABASE_HOST") ? getenv("DATABASE_HOST") : "0.0.0.0",
             db_port = getenv("DATABASE_PORT") ? getenv("DATABASE_PORT") : "5432";
 
     auto db_host_hostent = gethostbyname2(db_host.c_str(), AF_INET);
