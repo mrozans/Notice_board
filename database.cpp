@@ -6,25 +6,6 @@
 
 #include "database.h"
 
-pqxx::result Database::select_all(const std::string& table)
-{
-    try
-    {
-        pqxx::connection C(connection_string);
-        std::string sql = "SELECT * FROM " + table;
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
-        return R;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr<<e.what()<<std::endl;
-        pqxx::result R;
-        return R;
-    }
-}
-
 pqxx::result Database::select_with_specified_attribute(const std::string& table, const std::string& attribute, const std::string& value, bool key)
 {
     try
@@ -126,64 +107,12 @@ std::string Database::delete_record(const std::string& table, const std::string&
     }
 }
 
-std::string Database::delete_record_form_intersection_table(const std::string& category_id, const std::string& user_id)
-{
-    try
-    {
-        pqxx::connection C(connection_string);
-        std::string sql = "DELETE FROM categories_users WHERE category_id = " + category_id + " AND user_id = " + user_id;
-        pqxx::work W(C);
-        W.exec(sql);
-        W.commit();
-        C.disconnect();
-        return "1";
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr<<e.what()<<std::endl;
-        return "-1";
-    }
-}
-
-std::string Database::select_ip_where_fingerprint(const std::string& fingerprint)
-{
-    pqxx::result R = select_with_specified_attribute("clients", "fingerprint", fingerprint, true);
-    pqxx::result::const_iterator c = R.begin();
-    std::string result = c[2].as<std::string>();
-    return result;
-}
-
 std::string Database::select_public_key_where_fingerprint(const std::string& fingerprint)
 {
     pqxx::result R = select_with_specified_attribute("clients", "fingerprint", fingerprint, true);
     pqxx::result::const_iterator c = R.begin();
     std::string result = c[5].as<std::string>();
     return result;
-}
-
-std::vector<std::string> Database::select_ip_where_category(const std::string& category_name)
-{
-    try
-    {
-        pqxx::connection C(connection_string);
-        std::string sql = "SELECT ip_address FROM clients c INNER JOIN categories_users cu ON cu.user_id = c.user_id INNER JOIN categories ca ON ca.id = cu.category_id WHERE ca.name = '" + category_name + "';";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
-        std::vector<std::string> result;
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            if(c[0].is_null()) continue;
-            result.insert(result.end(), c[0].as<std::string>());
-        }
-        return result;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr<<e.what()<<std::endl;
-        std::vector<std::string> result;
-        return result;
-    }
 }
 
 std::vector<std::string> Database::select_local_request()
@@ -282,35 +211,6 @@ std::string Database::select_client_id_where_fingerprint(const std::string& fing
         std::cerr<<e.what()<<std::endl;
         return "-1";
     }
-}
-
-
-std::vector<message> Database::select_messages_where_category(const std::string& category_id)
-{
-    try
-    {
-        pqxx::connection C(connection_string);
-        std::string sql = "SELECT * FROM messages WHERE category_id = '" + category_id + "' AND ( expires_at >= CURRENT_TIMESTAMP OR expires_at is null);";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
-        std::vector<message> result;
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            message m;
-            m.title = c[2].as<std::string>();
-            m.content = c[3].as<std::string>();
-            result.insert(result.end(), m);
-        }
-        return result;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr<<e.what()<<std::endl;
-        std::vector<message> result;
-        return result;
-    }
-
 }
 
 full_message Database::select_message_where_id(const std::string& id)
@@ -425,32 +325,6 @@ std::string Database::select_category_by_name(const std::string& id)
     return result;
 }
 
-std::vector<name_id> Database::select_user_categories(const std::string& user_id)
-{
-    try
-    {
-        pqxx::connection C(connection_string);
-        std::string sql = "SELECT ca.id, ca.name FROM categories ca INNER JOIN categories_users cu ON cu.category_id = ca.id WHERE cu.user_id = " + user_id + ";";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
-        std::vector<name_id> result;
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            name_id n;
-            n.name = c[1].as<std::string>();
-            n.id = c[0].as<std::string>();
-            result.insert(result.end(), n);
-        }
-        return result;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr<<e.what()<<std::endl;
-        std::vector<name_id> result;
-        return result;
-    }
-}
 std::string Database::update_hostname_where_fingerprint(const std::string& fingerprint, const std::string& hostname)
 {
     return update("clients", "hostname", "fingerprint", fingerprint, hostname);
