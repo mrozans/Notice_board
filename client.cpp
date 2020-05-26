@@ -156,6 +156,23 @@ void process_requests(const std::string& token, std::shared_ptr<spdlog::logger> 
 
             request = database.select_local_request();
         }
+        catch (const std::logic_error &e)
+        {
+            try
+            {
+                database.delete_local_record_with_id("requests", request[0]);
+            }
+            catch (std::exception &f)
+            {
+                logger->error(f.what());
+                std::cerr << f.what() << std::endl;
+                exit(1);
+            }
+
+            logger->error(e.what());
+            std::cerr << e.what() << std::endl;
+            return;
+        }
         catch (const std::exception &e)
         {
             logger->error(e.what());
