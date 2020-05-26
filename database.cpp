@@ -338,17 +338,8 @@ std::string Database::update_hostname_where_fingerprint(const std::string& finge
     return update("clients", "hostname", "fingerprint", fingerprint, hostname);
 }
 
-std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& message, const std::string& number_of_days)
+std::string Database::insert_into_messages(const std::string& category_id, const std::string& title, const std::string& message, const int& number_of_days)
 {
-    //todo validate number of days - if it is valid, uprawnienia do wysyłania wiadomości
-
-//    std::vector<name_id> n = select_user_categories(user_id);
-//    bool belong = false;
-//    for(auto & i : n)
-//    {
-//        if(i.id == category_id) belong = true;
-//    }
-//    if(!belong) return "-1";
     std::vector<std::string> attributes;
     std::vector<std::pair <std::string, bool>> values;
     attributes.insert(attributes.begin(), "updated_at");
@@ -359,7 +350,7 @@ std::string Database::insert_into_messages(const std::string& category_id, const
     attributes.insert(attributes.begin(), "category_id");
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP", false));
     values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP", false));
-    values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP + INTERVAL '" + number_of_days + " day'", false));
+    values.insert(values.begin(), std::make_pair("CURRENT_TIMESTAMP + INTERVAL '" + std::to_string(number_of_days) + " day'", false));
     values.insert(values.begin(), std::make_pair(message, true));
     values.insert(values.begin(), std::make_pair(title, true));
     values.insert(values.begin(), std::make_pair(category_id, false));

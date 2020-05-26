@@ -163,7 +163,7 @@ JSONParser::server_message Message::get_new_messages()
     if(!prepare_stored_message())
     {
         this->server_message.code = 0;
-        this->server_message.body = "";
+        this->server_message.body = "Message transaction is not valid!";
     }
     return this->server_message;
 }
@@ -173,7 +173,7 @@ JSONParser::server_message Message::get_new_category()
     if(!prepare_stored_category())
     {
         this->server_message.code = 0;
-        this->server_message.body = "";
+        this->server_message.body = "Category transaction is not valid!";
     }
     return this->server_message;
 }
@@ -200,13 +200,22 @@ JSONParser::server_message Message::create_new_message()
     if(category_id.empty())
     {
         this->server_message.code = 1;
-        this->server_message.body = "0";
+        this->server_message.body = "Category not found!";
         return this->server_message;
     }
 
-    database.insert_into_messages(category_id, message_container.title, message_container.content, message_container.days);
-    this->server_message.body = "1";
-    return this->server_message;
+    try
+    {
+        database.insert_into_messages(category_id, message_container.title, message_container.content, std::stoi(message_container.days));
+        this->server_message.body = "1";
+        return this->server_message;
+    }
+    catch (const std::exception& e)
+    {
+        this->server_message.code = 1;
+        this->server_message.body = e.what();
+        return this->server_message;
+    }
 }
 
 JSONParser::server_message Message::client_authorization()
