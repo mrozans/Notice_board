@@ -6,11 +6,43 @@
 
 #include "database.h"
 
-pqxx::result Database::select_with_specified_attribute(const std::string& table, const std::string& attribute, const std::string& value, bool key)
+pqxx::result Database::notransaction_query(const std::string& sql)
 {
     try
     {
         pqxx::connection C(connection_string);
+        pqxx::nontransaction N(C);
+        pqxx::result R(N.exec(sql));
+        C.disconnect();
+        return R;
+    }
+    catch(const std::exception &e)
+    {
+        return pqxx::result();
+    }
+}
+
+std::string Database::transaction_query(const std::string& sql)
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        pqxx::work W(C);
+        W.exec(sql);
+        W.commit();
+        C.disconnect();
+        return "1";
+    }
+    catch (const std::exception &e)
+    {
+        return "-1";
+    }
+}
+
+pqxx::result Database::select_with_specified_attribute(const std::string& table, const std::string& attribute, const std::string& value, bool key)
+{
+    try
+    {
         std::string sql = "SELECT * FROM " + table + " WHERE " + attribute + " = ";
         if(key)
         {
@@ -19,9 +51,7 @@ pqxx::result Database::select_with_specified_attribute(const std::string& table,
             sql += "'";
         }
         else sql += value;
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
+        pqxx::result R = notransaction_query(sql);
         return R;
     }
     catch (const std::exception &e)
@@ -36,13 +66,9 @@ std::string Database::update(const std::string& table, const std::string& attrib
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "UPDATE " + table + " SET " + attribute + " = '" + new_value + "' WHERE " + where_attribute + " = '" + value + "';";
-        pqxx::work W(C);
-        W.exec(sql);
-        W.commit();
-        C.disconnect();
-        return "1";
+        std::string R = transaction_query(sql);
+        return R;
     }
     catch (const std::exception &e)
     {
@@ -55,7 +81,6 @@ std::string Database::insert(const std::string& table, std::vector<std::string> 
 {
     try
     {
-        pqxx::connection C(connection_string);
         if(attributes.size() != values.size()) return std::to_string(1);
         std::string sql1, sql2;
         for(unsigned int i = 0; i < attributes.size(); i++)
@@ -75,11 +100,8 @@ std::string Database::insert(const std::string& table, std::vector<std::string> 
             else sql2 += values[i].first;
         }
         std::string sql = "INSERT INTO " + table + " (" + sql1 + ") " + "VALUES (" + sql2 + ");";
-        pqxx::work W(C);
-        W.exec(sql);
-        W.commit();
-        C.disconnect();
-        return "1";
+        std::string R = transaction_query(sql);
+        return R;
     }
     catch (const std::exception &e)
     {
@@ -92,13 +114,9 @@ std::string Database::delete_record(const std::string& table, const std::string&
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "DELETE FROM " + table + " WHERE id = " + id;
-        pqxx::work W(C);
-        W.exec(sql);
-        W.commit();
-        C.disconnect();
-        return "1";
+        std::string R = transaction_query(sql);
+        return R;
     }
     catch (const std::exception &e)
     {
@@ -127,11 +145,8 @@ std::vector<std::string> Database::select_local_request()
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "SELECT * FROM requests LIMIT 1";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
+        pqxx::result R = notransaction_query(sql);
         std::vector<std::string> result;
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
@@ -156,11 +171,8 @@ std::string Database::select_user_where_fingerprint(const std::string& fingerpri
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "SELECT users.email FROM users INNER JOIN clients ON users.id = clients.user_id WHERE clients.fingerprint='" + fingerprint + "';";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
+        pqxx::result R = notransaction_query(sql);
         std::string result;
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
@@ -179,11 +191,8 @@ std::string Database::select_owner_email_where_message_id(const std::string& mes
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "SELECT u.email FROM users u INNER JOIN categories ca ON u.id = ca.owner_id INNER JOIN messages m ON m.category_id = ca.id WHERE m.id = '" + message_id + "';";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
+        pqxx::result R = notransaction_query(sql);
         std::string result;
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
@@ -202,11 +211,8 @@ std::string Database::select_client_id_where_fingerprint(const std::string& fing
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "SELECT id FROM clients WHERE fingerprint = '" + fingerprint + "';";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
+        pqxx::result R = notransaction_query(sql);
         std::string result;
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
@@ -225,11 +231,8 @@ message Database::select_message_where_id(const std::string& id)
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "SELECT * FROM messages WHERE id = '" + id + "'";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
+        pqxx::result R = notransaction_query(sql);
         message result;
         result.title = "";
         result.content = "";
@@ -258,12 +261,9 @@ std::vector<message_info> Database::select_messages_info(const std::string& clie
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "SELECT * FROM pending_changes WHERE client_id = '" + client_id + "'";
         if(first) sql += " LIMIT 1";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
+        pqxx::result R = notransaction_query(sql);
         std::vector<message_info> result;
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
@@ -287,11 +287,8 @@ std::vector<message_info> Database::select_categories_info(const std::string& cl
 {
     try
     {
-        pqxx::connection C(connection_string);
         std::string sql = "SELECT * FROM pending_categories WHERE client_id = '" + client_id + "' LIMIT 1";
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(sql));
-        C.disconnect();
+        pqxx::result R = notransaction_query(sql);
         std::vector<message_info> result;
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
@@ -447,10 +444,7 @@ void Database::test_connection()
 {
     try
     {
-        pqxx::connection C(connection_string);
-        pqxx::nontransaction N(C);
-        pqxx::result R(N.exec(""));
-        C.disconnect();
+        pqxx::result R = notransaction_query("");
     }
     catch(const std::exception &e)
     {

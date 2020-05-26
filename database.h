@@ -30,6 +30,8 @@ class Database
 private:
     std::string connection_string;
     std::shared_ptr<spdlog::logger> logger;
+    pqxx::result notransaction_query(const std::string &sql);
+    std::string transaction_query(const std::string &sql);
     pqxx::result select_with_specified_attribute(const std::string& table, const std::string& attribute, const std::string& value, bool key);
     std::string update(const std::string& table, const std::string& attribute, const std::string& where_attribute, const std::string& value, const std::string& new_value);
     std::string insert(const std::string& table, std::vector<std::string> attributes, std::vector<std::pair<std::string, bool>> values);
