@@ -1,11 +1,13 @@
 #!/bin/bash
 
+# Autorzy: Tomasz Jóźwik, Marcin Różański
+
 if [ "$MODE" == "server" ]
 then
     /app/build/server
 elif [ "$MODE" == "client" ]
 then
-    echo client mode
+    /app/build/client
 else
-    echo mode is not chosen properly
+    echo Mode is not chosen properly
 fi

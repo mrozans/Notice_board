@@ -1,6 +1,7 @@
-# Authors: Tomasz Jóżwik & Marcin Różański
+# Autorzy: Tomasz Jóżwik, Marcin Różański
 
 FROM ubuntu:18.04
+ARG DEBIAN_FRONTEND=noninteractive
 
 LABEL maintainer="tjozwik@protonmail.com"
 
@@ -26,8 +27,8 @@ RUN mkdir /app/build \
 
 # Configure service manager
 
-RUN chmod +x /app/service_manager.sh
+RUN chmod +x /app/Initializers/service_manager.sh
 
 # Run service manager
 
-CMD /app/service_manager.sh
+CMD /app/Initializers/service_manager.sh
