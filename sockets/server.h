@@ -10,7 +10,7 @@
 #include <netinet/in.h>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/base_sink.h"
-#include "database.h"
+#include "database/database.h"
 
 class Server{
 public:
@@ -40,6 +40,8 @@ private:
     static void *handle_message(void *voidArgs);
 
     static void close_single_connection(thread_args *args);
+
+    static void response(RequestHandler handler, JSONParser::server_message message, thread_args *args);
 };
 
 #endif //TIN_TABLICA_OGLOSZEN_SERVER_H

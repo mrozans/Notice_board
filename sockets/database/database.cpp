@@ -384,10 +384,11 @@ std::string Database::delete_message_with_id(const std::string& id, const std::s
 {
     try
     {
-        if(select_user_where_fingerprint(fingerprint) == select_owner_email_where_message_id(id))
-            return update("messages", "hidden","id" , id, "true");
-        else
-            return "";
+//        if(select_user_where_fingerprint(fingerprint) == select_owner_email_where_message_id(id))
+//            return update("messages", "hidden","id" , id, "true");
+//        else
+//            return "";
+        return update("messages", "hidden","id" , id, "true");
     }
     catch (const std::exception &e)
     {

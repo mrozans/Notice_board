@@ -15,9 +15,9 @@
 #include <arpa/inet.h>
 #include <nlohmann/json.hpp>
 #include <netdb.h>
-#include "RequestHandler.h"
+#include "communication/RequestHandler.h"
 #include "server.h"
-#include "Message.h"
+#include "communication/Message.h"
 
 int main(int argc, char *argv[])
 {
@@ -141,26 +141,33 @@ void *Server::handle_message(void *voidArgs)
         delete message;
     } catch (const std::exception& e) {
         args->logger->error(e.what());
-        auto server_message =  Message::server_error_message(e.what());
-        handler.send_message(server_message);
+//        try{
+//            auto server_message =  Message::server_error_message(e.what());
+//            handler.send_message(server_message);
+//        } catch (const std::exception& e) {
+//            args->logger->error(e.what());
+//        }
         close_single_connection(args);
         return nullptr;
     }
-    std::cout << clientMessage.token << " " << clientMessage.code << " " << clientMessage.body << std::endl;
-
     /*return message*/
-    auto server_message = Message(clientMessage, args->database).run();
 
+    auto server_message = Message(clientMessage, args->database).run();
+    response(handler, server_message, args);
+    close_single_connection(args);
+
+    return nullptr;
+}
+
+void Server::response(RequestHandler handler, JSONParser::server_message message, thread_args *args)
+{
     try{
-        handler.send_message(server_message);
-        args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
+        handler.send_message(message);
+        args->logger->info("message: " + JSONParser::generate_server_message(message) +
                            "sent from thread from socket: " + std::to_string(args->new_socket));
     } catch (const std::exception& e) {
         args->logger->error(e.what());
     }
-
-    close_single_connection(args);
-    return nullptr;
 }
 
 void Server::close_single_connection(thread_args *args)

@@ -17,9 +17,9 @@
 #include <zconf.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
-#include "JSONParser.h"
-#include "RequestHandler.h"
-#include "database.h"
+#include "communication/JSONParser.h"
+#include "communication/RequestHandler.h"
+#include "database/database.h"
 
 Database database;
 
@@ -36,16 +36,21 @@ class Client
         struct sockaddr_in6 ipv6;
     } server{};
     int sock{};
+public:
+    static std::mutex mutex;
+
+    void connect_to_server() noexcept(false);
 
 public:
     Client(char const *server_name, uint16_t port, int timeout, std::shared_ptr<spdlog::logger> logger) noexcept(false) : server_name(server_name), port(port), timeout(timeout), logger(std::move(logger))
     {
-        connect_to_server();
+        mutex.lock();
     };
 
     ~Client()
     {
         close(sock);
+        mutex.unlock();
     };
 
     JSONParser::server_message send_and_receive(const JSONParser::client_message& message) noexcept(false);
@@ -65,5 +70,4 @@ private:
     static bool check_if_ipv6(const char *ip);
     void connect_to_ipv4() noexcept(false);
     void connect_to_ipv6() noexcept(false);
-    void connect_to_server() noexcept(false);
 };
