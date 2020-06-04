@@ -35,12 +35,13 @@ private:
     pqxx::result select_with_specified_attribute(const std::string& table, const std::string& attribute, const std::string& value, bool key);
     std::string update(const std::string& table, const std::string& attribute, const std::string& where_attribute, const std::string& value, const std::string& new_value);
     std::string insert(const std::string& table, std::vector<std::string> attributes, std::vector<std::pair<std::string, bool>> values);
-    std::string delete_record(const std::string& table, const std::string& id);
+    pqxx::result select_all(const std::string &table);
 
 public:
     Database(std::string connection_string, std::shared_ptr<spdlog::logger> logger) : connection_string(std::move(connection_string)), logger(std::move(logger)){}
     explicit Database() = default;
 
+    std::string delete_record(const std::string& table, const std::string& id);
     std::string select_public_key_where_fingerprint(const std::string& fingerprint);
     std::string select_client_id_where_change_id(const std::string& table, const std::string& change_id);
     std::vector<std::string> select_local_request();
@@ -61,6 +62,11 @@ public:
     std::string delete_pending_category(const std::string& id, const std::string& fingerprint);
     std::string select_client_id_where_fingerprint(const std::string& fingerprint);
     void test_connection();
+    bool check_connection();
+    std::vector<message_info> get_pending();
+    std::vector<std::string> get_categories();
+    std::vector<message> select_messages_where_category(const std::string &category_id);
+    std::string select_message_id_where_title(const std::string &title);
 };
 
 #endif

@@ -23,7 +23,11 @@ add_executable(JSONParserTest Tests/JSONParserTest.cpp)
 
 target_link_libraries(JSONParserTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} nlohmann_json::nlohmann_json)
 
-add_test(boostUnitTestsRun JSONParserTest)
+add_executable(databaseTest Tests/databaseTest.cpp)
+
+target_link_libraries(databaseTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} -lpqxx)
+
+add_test(boostUnitTestsRun JSONParserTest databaseTest )
 
 #tests
 

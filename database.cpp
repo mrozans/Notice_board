@@ -39,6 +39,22 @@ std::string Database::transaction_query(const std::string& sql)
     }
 }
 
+pqxx::result Database::select_all(const std::string& table)
+{
+    try
+    {
+        std::string sql = "SELECT * FROM " + table;
+        pqxx::result R = notransaction_query(sql);
+        return R;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        pqxx::result R;
+        return R;
+    }
+}
+
 pqxx::result Database::select_with_specified_attribute(const std::string& table, const std::string& attribute, const std::string& value, bool key)
 {
     try
@@ -449,5 +465,117 @@ void Database::test_connection()
     catch(const std::exception &e)
     {
         throw std::logic_error("Database connection failed!");
+    }
+}
+
+bool Database::check_connection()
+{
+    try
+    {
+        pqxx::connection C(connection_string);
+        bool value = C.is_open();
+        C.disconnect();
+        return value;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        return false;
+    }
+}
+
+std::vector<std::string> Database::get_categories()
+{
+    try
+    {
+        pqxx::result R = select_all("categories");
+        std::vector<std::string> result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            result.insert(result.end(), c[0].as<std::string>());
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        std::vector<std::string> result;
+        return result;
+    }
+}
+
+std::vector<message_info> Database::get_pending()
+{
+    try
+    {
+        pqxx::result R = select_all("pending_changes");
+        std::vector<message_info> result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            message_info m;
+            m.id = c[0].as<std::string>();
+            m.message_id = c[2].as<std::string>();
+            result.insert(result.end(), m);
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        std::vector<message_info> result;
+        return result;
+    }
+}
+
+std::vector<message> Database::select_messages_where_category(const std::string& category_id)
+{
+    try
+    {
+        std::string sql = "SELECT * FROM messages WHERE category_id = '" + category_id + "' AND ( expires_at >= CURRENT_TIMESTAMP OR expires_at is null);";
+        pqxx::result R = notransaction_query(sql);
+        std::vector<message> result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            message m;
+            m.title = c[2].as<std::string>();
+            m.content = c[3].as<std::string>();
+            result.insert(result.end(), m);
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        std::vector<message> result;
+        return result;
+    }
+
+}
+
+std::string Database::select_message_id_where_title(const std::string &title)
+{
+    try
+    {
+        pqxx::result R = select_all("messages");
+        std::vector<std::string> result;
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+        {
+            if(c[2].as<std::string>() == title)
+            {
+                result.insert(result.end(), c[0].as<std::string>());
+            }
+        }
+        std::string result1;
+        if(!result.empty())
+        {
+            result1 = result[result.size()-1];
+        }
+        return result1;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr<<e.what()<<std::endl;
+        std::string result;
+        return result;
     }
 }
