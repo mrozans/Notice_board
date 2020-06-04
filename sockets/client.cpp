@@ -9,8 +9,8 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include "client.h"
-#include "database.h"
-
+#include "database/database.h"
+std::mutex Client::mutex;
 void get_new_content(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port, std::string content_type) noexcept(false);
 
 void get_new_content(const std::string& token, std::shared_ptr<spdlog::logger> logger, const std::string& server_name, const uint16_t& server_port, std::string content_type) noexcept(false)
@@ -37,11 +37,11 @@ void get_new_content(const std::string& token, std::shared_ptr<spdlog::logger> l
                     body
             };
         }
-
+        auto client = new Client(server_name.c_str(), server_port, 5, logger);
         try
         {
-            auto client = Client(server_name.c_str(), server_port, 5, logger);
-            response = client.send_and_receive(message);
+            client->connect_to_server();
+            response = client->send_and_receive(message);
         }
         catch (const std::exception &e)
         {
@@ -52,6 +52,7 @@ void get_new_content(const std::string& token, std::shared_ptr<spdlog::logger> l
                     e.what()
             };
         }
+        delete client;
 
         JSONParser::message_transfer_container message_transfer_container;
 
@@ -128,23 +129,24 @@ void process_requests(const std::string& token, std::shared_ptr<spdlog::logger> 
 
     while(!request.empty())
     {
-        auto client = Client(server_name.c_str(), server_port, 5, logger);
+        auto client = new Client(server_name.c_str(), server_port, 5, logger);
 
         JSONParser::server_message server_response{};
         try
         {
+            client->connect_to_server();
             if(request[1] == "1" && request.size() == 2)
             {
-                server_response = client.authorization(token);
+                server_response = client->authorization(token);
             }
             else if(request[1] == "2" && request.size() == 3)
             {
-                server_response = client.remove_message(token, request[2]);
+                server_response = client->remove_message(token, request[2]);
             }
             else if(request[1] == "3" && request.size() == 6)
             {
                 // category, title, content, days of validity
-                server_response = client.create_new_message(token, request[2], request[3], request[4], request[5]);
+                server_response = client->create_new_message(token, request[2], request[3], request[4], request[5]);
             }
             else
             {
@@ -171,35 +173,59 @@ void process_requests(const std::string& token, std::shared_ptr<spdlog::logger> 
 
             logger->error(e.what());
             std::cerr << e.what() << std::endl;
-            return;
+            break;
         }
         catch (const std::exception &e)
         {
             logger->error(e.what());
             std::cerr << e.what() << std::endl;
-            return;
+            break;
         }
+        delete client;
     }
 }
 
 void handle_requests(const std::string& token, std::shared_ptr<spdlog::logger> logger);
+
+void get_new_content_thread(const std::string& token, std::shared_ptr<spdlog::logger> logger, std::string server_name, const uint16_t& server_port, std::string content_type, unsigned sleep_time)
+{
+    while (true)
+    {
+        get_new_content(token, logger, server_name, server_port, content_type);
+        sleep(sleep_time);
+    }
+}
+void process_requests_thread(const std::string& token, std::shared_ptr<spdlog::logger> logger, std::string server_name, const uint16_t& server_port, unsigned sleep_time)
+{
+    while (true)
+    {
+        process_requests(token, logger, server_name, server_port);
+        sleep(sleep_time);
+    }
+}
 
 void handle_requests(const std::string& token, std::shared_ptr<spdlog::logger> logger)
 {
     std::string server_name = getenv("SERVER_NAME") ? getenv("SERVER_NAME") : "127.0.0.1",
         server_port = getenv("SERVER_PORT") ? getenv("SERVER_PORT") : "57076";
 
-    auto client = Client(server_name.c_str(), stoi(server_port), 5, logger);
-
-    client.authorization(token);
-
-    while(true)
-    {
-        get_new_content(token, logger, server_name, stoi(server_port), "categories");
-        process_requests(token, logger, server_name, stoi(server_port));
-        get_new_content(token, logger, server_name, stoi(server_port), "messages");
-        sleep(2);
+    auto client = new Client(server_name.c_str(), stoi(server_port), 5, logger);
+    try{
+        client->connect_to_server();
+        client->authorization(token);
+    } catch (const std::exception& e) {
+        logger->critical(e.what());
+        exit(0);
     }
+    delete client;
+    unsigned sleep_time = 1;
+    std::thread t1(get_new_content_thread, token, logger, server_name, stoi(server_port), "categories", sleep_time);
+    std::thread t2(process_requests_thread, token, logger, server_name, stoi(server_port), sleep_time);
+    std::thread t3(get_new_content_thread, token, logger, server_name, stoi(server_port), "messages", sleep_time);
+
+    t1.join();
+    t2.join();
+    t3.join();
 }
 
 int main(int argc, char *argv[])

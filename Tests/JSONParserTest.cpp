@@ -5,8 +5,9 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE tests2
 #include <boost/test/unit_test.hpp>
-#include "../JSONParser.cpp"
-
+#include <nlohmann/json.hpp>
+#include "../sockets/communication/JSONParser.h"
+using json = nlohmann::json;
 /*generate_client_message*/
 BOOST_AUTO_TEST_CASE(Generate_client_message_test)
 {

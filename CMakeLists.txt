@@ -17,9 +17,9 @@ select_library_configurations(libpqxx)
 
 
 #server
-add_executable(server server.cpp RequestHandler.cpp RequestHandler.h JSONParser.cpp JSONParser.h Message.h Message.cpp database.h database.cpp)
+add_executable(server sockets/server.cpp sockets/communication/RequestHandler.cpp sockets/communication/RequestHandler.h sockets/communication/JSONParser.cpp sockets/communication/JSONParser.h sockets/communication/Message.h sockets/communication/Message.cpp sockets/database/database.h sockets/database/database.cpp)
 #tests
-add_executable(JSONParserTest Tests/JSONParserTest.cpp)
+add_executable(JSONParserTest Tests/JSONParserTest.cpp sockets/communication/JSONParser.h sockets/communication/JSONParser.cpp)
 
 target_link_libraries(JSONParserTest ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} nlohmann_json::nlohmann_json)
 
@@ -44,5 +44,5 @@ endif()
 
 target_link_libraries(server PRIVATE nlohmann_json::nlohmann_json -lpqxx)
 
-add_executable(client client.h client.cpp JSONParser.cpp JSONParser.h RequestHandler.cpp RequestHandler.h database.h database.cpp)
+add_executable(client sockets/client.h sockets/client.cpp sockets/communication/JSONParser.cpp sockets/communication/JSONParser.h sockets/communication/RequestHandler.cpp sockets/communication/RequestHandler.h sockets/database/database.h sockets/database/database.cpp)
 target_link_libraries(client PRIVATE nlohmann_json::nlohmann_json -lpqxx)

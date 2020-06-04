@@ -15,16 +15,16 @@
 #include <arpa/inet.h>
 #include <nlohmann/json.hpp>
 #include <netdb.h>
-#include "RequestHandler.h"
+#include "communication/RequestHandler.h"
 #include "server.h"
-#include "Message.h"
+#include "communication/Message.h"
 
 int main(int argc, char *argv[])
 {
     Server s = Server(in6addr_any, getenv("SERVER_PORT") ? std::stoi(getenv("SERVER_PORT")) : 57076);
     s.configure_server();
     s.start_server(40);
-    //s.stop();
+    s.stop();
 }
 
 Server::Server(in6_addr addr, uint16_t port_number): addr(addr), port(port_number)
@@ -93,6 +93,7 @@ void Server::configure_server()
 
 void Server::start_server(const int connections)
 {
+    this->run = true;
     if (listen(server_socket, connections) != 0)
     {
         logger->error(strerror(errno));
@@ -107,13 +108,12 @@ void Server::start_server(const int connections)
     pthread_attr_setdetachstate(&t_attr, PTHREAD_CREATE_DETACHED);
 
     logger->info("server started");
-
-    while (true)
+    while (run)
     {
         args = new thread_args;
         args->database = this->database;
         args->logger = logger;
-        args->timeout = 5;
+        args->timeout = this->timeout;
         args->new_socket = accept(server_socket, (struct sockaddr *) &server_storage, &address_size);
 
         setsockopt(args->new_socket, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&mode, sizeof(mode));
@@ -132,35 +132,42 @@ void *Server::handle_message(void *voidArgs)
     auto handler = RequestHandler(args->new_socket,args->logger, args->timeout);
 
     args->logger->info("start of thread for socket: " + std::to_string(args->new_socket));
-    //receive and
-    char * message;
+
+    JSONParser::client_message clientMessage = get_message(handler, args);
+
+    JSONParser::server_message server_message = Message(clientMessage, args->database).run();
+
+    response(handler, server_message, args);
+    close_single_connection(args);
+
+    return nullptr;
+}
+
+JSONParser::client_message Server::get_message(RequestHandler handler, thread_args *args)
+{
     JSONParser::client_message clientMessage;
+    char * message;
     try{
         message = handler.read_message();
         clientMessage = JSONParser::get_client_message(message);
         delete message;
     } catch (const std::exception& e) {
         args->logger->error(e.what());
-        auto server_message =  Message::server_error_message(e.what());
-        handler.send_message(server_message);
         close_single_connection(args);
-        return nullptr;
+        return clientMessage;
     }
-    std::cout << clientMessage.token << " " << clientMessage.code << " " << clientMessage.body << std::endl;
+    return clientMessage;
+}
 
-    /*return message*/
-    auto server_message = Message(clientMessage, args->database).run();
-
+void Server::response(const RequestHandler& handler, const JSONParser::server_message& message, thread_args *args)
+{
     try{
-        handler.send_message(server_message);
-        args->logger->info("message: " + JSONParser::generate_server_message(server_message) +
+        handler.send_message(message);
+        args->logger->info("message: " + JSONParser::generate_server_message(message) +
                            "sent from thread from socket: " + std::to_string(args->new_socket));
     } catch (const std::exception& e) {
         args->logger->error(e.what());
     }
-
-    close_single_connection(args);
-    return nullptr;
 }
 
 void Server::close_single_connection(thread_args *args)
@@ -168,4 +175,10 @@ void Server::close_single_connection(thread_args *args)
     close((args->new_socket));
     args->logger->info("end of thread for socket: " + std::to_string(args->new_socket));
     delete args;
+}
+
+void Server::stop()
+{
+    this->run = false;
+    close(this->server_socket);
 }

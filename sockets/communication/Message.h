@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "JSONParser.h"
-#include "database.h"
+#include "../database/database.h"
 
 class Message {
 private:
