@@ -39,6 +39,29 @@ std::string Database::transaction_query(const std::string& sql)
     }
 }
 
+std::string Database::single_string_result(const pqxx::result& R, int column)
+{
+    std::string result;
+    if(R.empty()) return  result;
+    pqxx::result::const_iterator c = R.begin();
+    result = c[column].as<std::string>();
+    return result;
+}
+
+std::vector<message_info> Database::message_info_result(const pqxx::result& R)
+{
+    std::vector<message_info> result;
+    for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
+    {
+        message_info m;
+        m.id = c[0].as<std::string>();
+        m.message_id = c[2].as<std::string>();
+        m.state = c[3].as<int>();
+        result.insert(result.end(), m);
+    }
+    return result;
+}
+
 pqxx::result Database::select_all(const std::string& table)
 {
     try
@@ -144,16 +167,14 @@ std::string Database::delete_record(const std::string& table, const std::string&
 std::string Database::select_public_key_where_fingerprint(const std::string& fingerprint)
 {
     pqxx::result R = select_with_specified_attribute("clients", "fingerprint", fingerprint, true);
-    pqxx::result::const_iterator c = R.begin();
-    std::string result = c[5].as<std::string>();
+    std::string result = single_string_result(R, 5);
     return result;
 }
 
 std::string Database::select_client_id_where_change_id(const std::string& table, const std::string& change_id)
 {
     pqxx::result R = select_with_specified_attribute(table, "id", change_id, true);
-    pqxx::result::const_iterator c = R.begin();
-    std::string result = c[1].as<std::string>();
+    std::string result = single_string_result(R, 1);
     return result;
 }
 
@@ -189,11 +210,7 @@ std::string Database::select_user_where_fingerprint(const std::string& fingerpri
     {
         std::string sql = "SELECT users.email FROM users INNER JOIN clients ON users.id = clients.user_id WHERE clients.fingerprint='" + fingerprint + "';";
         pqxx::result R = notransaction_query(sql);
-        std::string result;
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            result = c[0].as<std::string>();
-        }
+        std::string result = single_string_result(R, 0);
         return result;
     }
     catch (const std::exception &e)
@@ -209,11 +226,7 @@ std::string Database::select_owner_email_where_message_id(const std::string& mes
     {
         std::string sql = "SELECT u.email FROM users u INNER JOIN categories ca ON u.id = ca.owner_id INNER JOIN messages m ON m.category_id = ca.id WHERE m.id = '" + message_id + "';";
         pqxx::result R = notransaction_query(sql);
-        std::string result;
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            result = c[0].as<std::string>();
-        }
+        std::string result = single_string_result(R, 0);
         return result;
     }
     catch (const std::exception &e)
@@ -229,11 +242,7 @@ std::string Database::select_client_id_where_fingerprint(const std::string& fing
     {
         std::string sql = "SELECT id FROM clients WHERE fingerprint = '" + fingerprint + "';";
         pqxx::result R = notransaction_query(sql);
-        std::string result;
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            result = c[0].as<std::string>();
-        }
+        std::string result = single_string_result(R, 0);
         return result;
     }
     catch (const std::exception &e)
@@ -253,12 +262,11 @@ message Database::select_message_where_id(const std::string& id)
         result.title = "";
         result.content = "";
         result.category_id = "";
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            result.title = c[2].as<std::string>();
-            result.content = c[3].as<std::string>();
-            result.category_id = c[1].as<std::string>();
-        }
+        if(R.empty()) return  result;
+        pqxx::result::const_iterator c = R.begin();
+        result.title = c[2].as<std::string>();
+        result.content = c[3].as<std::string>();
+        result.category_id = c[1].as<std::string>();
         return result;
     }
     catch (const std::exception &e)
@@ -280,15 +288,7 @@ std::vector<message_info> Database::select_messages_info(const std::string& clie
         std::string sql = "SELECT * FROM pending_changes WHERE client_id = '" + client_id + "'";
         if(first) sql += " LIMIT 1";
         pqxx::result R = notransaction_query(sql);
-        std::vector<message_info> result;
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            message_info m;
-            m.id = c[0].as<std::string>();
-            m.message_id = c[2].as<std::string>();
-            m.state = c[3].as<int>();
-            result.insert(result.end(), m);
-        }
+        std::vector<message_info> result = message_info_result(R);
         return result;
     }
     catch (const std::exception &e)
@@ -305,15 +305,7 @@ std::vector<message_info> Database::select_categories_info(const std::string& cl
     {
         std::string sql = "SELECT * FROM pending_categories WHERE client_id = '" + client_id + "' LIMIT 1";
         pqxx::result R = notransaction_query(sql);
-        std::vector<message_info> result;
-        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-        {
-            message_info m;
-            m.id = c[0].as<std::string>();
-            m.message_id = c[2].as<std::string>();
-            m.state = c[3].as<int>();
-            result.insert(result.end(), m);
-        }
+        std::vector<message_info> result = message_info_result(R);
         return result;
     }
     catch (const std::exception &e)
@@ -327,22 +319,14 @@ std::vector<message_info> Database::select_categories_info(const std::string& cl
 std::string Database::select_category_where_id(const std::string& id)
 {
     pqxx::result R = select_with_specified_attribute("categories", "id", id, false);
-    std::string result;
-    for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-    {
-        result = c[1].as<std::string>();
-    }
+    std::string result = single_string_result(R, 1);
     return result;
 }
 
 std::string Database::select_category_by_name(const std::string& id)
 {
     pqxx::result R = select_with_specified_attribute("categories", "name", "'" + id + "'", false);
-    std::string result;
-    for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
-    {
-        result = c[0].as<std::string>();
-    }
+    std::string result = single_string_result(R, 0);
     return result;
 }
 

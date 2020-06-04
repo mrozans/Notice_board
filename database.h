@@ -36,6 +36,8 @@ private:
     std::string update(const std::string& table, const std::string& attribute, const std::string& where_attribute, const std::string& value, const std::string& new_value);
     std::string insert(const std::string& table, std::vector<std::string> attributes, std::vector<std::pair<std::string, bool>> values);
     pqxx::result select_all(const std::string &table);
+    static std::string single_string_result(const pqxx::result &R, int column);
+    static std::vector<message_info> message_info_result(const pqxx::result &R);
 
 public:
     Database(std::string connection_string, std::shared_ptr<spdlog::logger> logger) : connection_string(std::move(connection_string)), logger(std::move(logger)){}
